@@ -1,0 +1,11 @@
+{
+  "version": "1.00",
+  "model_id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+  "prompt": "Explain the difference between supervised and unsupervised learning in three paragraphs.",
+  "max_new_tokens": 10,
+  "max_new_tokens_experiment": 200,
+  "quantization_levels": ["fp16", "4bit", "8bit"],
+  "layer_shards_path": "./model_shards",
+  "seed": 42,
+  "cpu_tdp_watts": 45
+}
