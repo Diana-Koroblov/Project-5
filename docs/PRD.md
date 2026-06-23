@@ -27,13 +27,14 @@ This experiment quantifies the failure conditions of direct execution (the **Bas
 
 | Component | Specification |
 |---|---|
-| CPU | **TBD — to be documented by partner (see TODO P0-05)** |
-| RAM | **TBD — to be documented by partner (see TODO P0-05)** |
-| GPU | **TBD — to be documented by partner (see TODO P0-05)** |
-| Storage | **TBD — to be documented by partner** (NVMe SSD strongly recommended; critical for AirLLM layer-loading I/O performance) |
-| OS overhead | **TBD** — typically ~2–3 GB reserved at idle; actual free RAM depends on partner's OS and background processes |
+| CPU | AMD Ryzen 9700X (8 cores / 16 threads, 65 W TDP) |
+| RAM | 32 GB DDR5 5200 MHz |
+| GPU | AMD Radeon RX 9070 XT (16 GB GDDR6) — present but **not used for inference**: ROCm/HIP support on Windows is insufficient for the 9070 XT (RDNA 4, 2025); all inference runs on CPU |
+| Storage | 512 GB NVMe PCIe 4.0 |
+| OS | Windows 11 Pro |
+| OS overhead | ~2–3 GB reserved at idle; leaves ~29 GB free RAM for the experiment |
 
-**Primary bottleneck:** To be confirmed with partner's hardware. If running on CPU only with no discrete GPU, the system will be **memory-bound** and RAM capacity + bandwidth will dominate the Decode phase. If a discrete GPU with dedicated VRAM is available, VRAM capacity becomes the primary constraint for direct execution.
+**Primary bottleneck:** The system is **memory-bound** during the Decode phase. All inference runs on CPU; the 32 GB DDR5 is sufficient for AirLLM Q4/Q8 but not for FP16 direct execution (~19 GB required before OS and KV-cache overhead).
 
 ---
 

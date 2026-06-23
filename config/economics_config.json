@@ -1,9 +1,9 @@
 {
   "version": "1.00",
-  "hardware_cost_ils": 6000,
+  "hardware_cost_ils": 7000,
   "amortization_years": 3,
   "electricity_kwh_ils": 0.60,
-  "avg_power_watts": 45,
+  "avg_power_watts": 65,
   "maintenance_cost_annual_ils": 300,
   "api_provider": "openai_gpt4o_mini",
   "api_input_cost_per_1m_tokens": 0.15,
