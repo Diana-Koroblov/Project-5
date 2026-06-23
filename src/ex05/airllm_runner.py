@@ -11,12 +11,12 @@ token regardless of KV-cache state — the disk I/O is the dominant cost.
 from __future__ import annotations
 
 import time
-from typing import Optional
+from pathlib import Path
 
 from ex05.config import ExperimentConfig, get_hf_token
 from ex05.metrics import MetricsResult, RamMonitor
 
-_COMPRESSION_MAP: dict[str, Optional[str]] = {
+_COMPRESSION_MAP: dict[str, str | None] = {
     "fp16": None,
     "4bit": "4bit",
     "8bit": "8bit",
@@ -24,18 +24,49 @@ _COMPRESSION_MAP: dict[str, Optional[str]] = {
 }
 
 
-def _make_model(model_id: str, token: str, compression: Optional[str], shards_path: str):
-    """Instantiate the AirLLM AutoModel (deferred import)."""
+def _resolve_model_source(cfg: ExperimentConfig) -> str:
+    """Return the local model directory if the full model was already
+    downloaded there, otherwise fall back to the HF repo id.
+
+    Using the local download avoids re-fetching ~16 GB into the HF hub cache
+    and sidesteps the Windows symlink-privilege error (WinError 1314) that the
+    hub cache triggers without Developer Mode / admin rights.
+    """
+    local = Path(cfg.layer_shards_path)
+    if (local / "model.safetensors.index.json").exists():
+        return str(local)
+    return cfg.model_id
+
+
+def _make_model(
+    model_source: str, token: str, compression: str | None, shards_path: str
+):
+    """Instantiate the AirLLM AutoModel (deferred import).
+
+    device="cpu" is forced because this experiment runs CPU-only (no usable
+    CUDA GPU); AirLLM otherwise defaults to "cuda:0". The token kwarg is
+    `hf_token` in AirLLM's API, not `token`. When model_source is a local
+    directory, AirLLM splits it in place (no download); split shards are
+    written to shards_path/splitted_model[.<compression>].
+    """
     from airllm import AutoModel  # noqa: PLC0415
-    return AutoModel.from_pretrained(
-        model_id,
-        token=token,
+    model = AutoModel.from_pretrained(
+        model_source,
+        device="cpu",
+        hf_token=token,
         compression=compression,
         layer_shards_saving_path=shards_path,
     )
+    # transformers >= ~4.45 GenerationMixin.generate() reads the class attr
+    # `_is_stateful` (defined on PreTrainedModel). AirLLM's model inherits only
+    # GenerationMixin, so it is missing. AirLLM is not a stateful model, so
+    # False is the correct value.
+    if not hasattr(type(model), "_is_stateful"):
+        type(model)._is_stateful = False
+    return model
 
 
-def run_airllm(cfg: ExperimentConfig, compression: Optional[str]) -> MetricsResult:
+def run_airllm(cfg: ExperimentConfig, compression: str | None) -> MetricsResult:
     """Run AirLLM inference and return a full MetricsResult.
 
     Args:
@@ -50,16 +81,17 @@ def run_airllm(cfg: ExperimentConfig, compression: Optional[str]) -> MetricsResu
 
     token = get_hf_token()
     scenario = f"airllm_{compression or 'fp16'}"
+    model_source = _resolve_model_source(cfg)
     monitor = RamMonitor()
-    error_msg: Optional[str] = None
+    error_msg: str | None = None
     output_text = ""
     ttft = 0.0
     token_timestamps: list[float] = []
     total_rt = 0.0
 
     try:
-        model = _make_model(cfg.model_id, token, compression, cfg.layer_shards_path)
-        tokenizer = AutoTokenizer.from_pretrained(cfg.model_id, token=token)
+        model = _make_model(model_source, token, compression, cfg.layer_shards_path)
+        tokenizer = AutoTokenizer.from_pretrained(model_source, token=token)
         input_ids = tokenizer(
             cfg.prompt,
             return_tensors="pt",
@@ -69,11 +101,14 @@ def run_airllm(cfg: ExperimentConfig, compression: Optional[str]) -> MetricsResu
         monitor.start()
 
         # --- Pass 1: TTFT (1 token) ---
+        # use_cache=False is required: AirLLM does not support transformers'
+        # new Cache class and forces it off internally; passing True makes
+        # generate() build a cache object that breaks prepare_inputs_for_generation.
         t0 = time.perf_counter()
-        out1 = model.generate(
+        model.generate(
             input_ids,
             max_new_tokens=1,
-            use_cache=True,
+            use_cache=False,
             return_dict_in_generate=True,
         )
         ttft = time.perf_counter() - t0
@@ -84,7 +119,7 @@ def run_airllm(cfg: ExperimentConfig, compression: Optional[str]) -> MetricsResu
         out2 = model.generate(
             input_ids,
             max_new_tokens=cfg.max_new_tokens_experiment,
-            use_cache=True,
+            use_cache=False,
             return_dict_in_generate=True,
         )
         t_gen_end = time.perf_counter()
@@ -102,7 +137,8 @@ def run_airllm(cfg: ExperimentConfig, compression: Optional[str]) -> MetricsResu
 
     finally:
         monitor.stop()
-        monitor.join(timeout=2.0)
+        if monitor.is_alive():
+            monitor.join(timeout=2.0)
 
     return MetricsResult(
         scenario=scenario,

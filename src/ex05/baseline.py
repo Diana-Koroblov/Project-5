@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import sys
 import time
-from typing import Optional
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -57,7 +56,7 @@ def run_baseline(cfg: ExperimentConfig) -> MetricsResult:
     monitor.start()
     _arm_timeout()
     timer = InferenceTimer()
-    error_msg: Optional[str] = None
+    error_msg: str | None = None
     output_text = ""
 
     try:

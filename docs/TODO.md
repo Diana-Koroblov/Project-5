@@ -82,8 +82,11 @@ The AI will post this notice in the chat when it reaches that task. You reply to
 - [x] E1-14 [Done] [User] [Priority: High] - Pull and run a small model in Ollama to verify local LLM execution works end-to-end on your hardware | DoD: `ollama run tinyllama "say hello"` (or any small model) completes and returns a response without errors
   - [x] ⏳ WAITING FOR USER — Please run: `ollama run tinyllama "say hello"`. This uses a ~600 MB model and should complete in under a minute. Reply with the output (even a partial response is fine).
   - [x] Result: tinyllama responded coherently via Ollama REST API (43 tokens, `done: True`). Note: `ollama run <model> "<prompt>"` hangs in non-interactive/background shells — use the `POST /api/generate` endpoint (`http://localhost:11434/api/generate`, `stream:false`) for scripted runs.
-- [ ] E1-15 [Pending] [User] [Priority: High] - Clear RAM to ≤ 4 GB occupied (close browser tabs and background apps), then give the go-ahead for the AirLLM pipeline smoke test | DoD: You have confirmed RAM is cleared and the AI may proceed; **Phase 1 gate before Phase 2**
-  - [ ] ⏳ WAITING FOR USER — Before I run the AirLLM smoke test, please close background applications to free RAM to ≤ 4 GB used. Reply with "ready" when done.
+- [x] E1-15 [Done] [User] [Priority: High] - Clear RAM to ≤ 4 GB occupied (close browser tabs and background apps), then give the go-ahead for the AirLLM pipeline smoke test | DoD: You have confirmed RAM is cleared and the AI may proceed; **Phase 1 gate before Phase 2**
+  - [x] ⏳ WAITING FOR USER — Before I run the AirLLM smoke test, please close background applications to free RAM to ≤ 4 GB used. Reply with "ready" when done.
+  - [x] Result: AirLLM **FP16** smoke test PASSED on CPU (TTFT 14.85 s, 3 tokens, peak RAM 2.48 GB, coherent output). Pipeline works end-to-end: local-dir load → layer-shard split → CPU layer streaming (~2.4 layers/s) → generation.
+  - [x] **RISK-05 CONFIRMED (Q4/Q8 blocked):** AirLLM compression is bitsandbytes-based, which requires CUDA. On this AMD/CPU-only machine (Radeon, no NVIDIA), `compression="4bit"/"8bit"` fails with `AssertionError: Torch not compiled with CUDA enabled`. **Only the FP16 AirLLM path is runnable on this hardware.** See [[airllm-cpu-bitsandbytes-cuda-constraint]].
+  - [x] Dependency fixes required to make AirLLM 2.11.0 work (all in `pyproject.toml` / `src/ex05/airllm_runner.py`): pin `optimum<1.24` (BetterTransformer removed in 2.x), pin `transformers>=4.44,<4.47` (4.57 removed `is_tf_available`, `_is_stateful`, and per-layer RoPE fallback), add `sentencepiece`; use `hf_token=`/`device="cpu"`, load from local `./model_shards`, `_is_stateful=False` shim, `use_cache=False`. See [[airllm-working-dependency-stack]].
 
 ---
 
@@ -137,11 +140,13 @@ The AI will post this notice in the chat when it reaches that task. You reply to
   - [ ] Validation: Run `uv run pytest` and confirm test coverage is ≥ 85%.
 - [x] EC4-03 [Done] [Developer] [Priority: High] - Write `experiments/run_economics.py` — reads config, runs cost model, writes `results/economics.json` and generates `figures/break_even.png` | DoD: Break-even graph shows On-Prem and API curves with a vertical dashed line at N*; runnable via `uv run`
   - [x] Validation: File is within the 150-line limit.
-- [ ] EC4-04 [Pending] [Developer] [Priority: High] - Run the economic analysis and generate the break-even graph | DoD: `figures/break_even.png` exists; N* value is printed to console and saved in `results/economics.json`
+- [x] EC4-04 [Done] [Developer] [Priority: High] - Run the economic analysis and generate the break-even graph | DoD: `figures/break_even.png` exists; N* value is printed to console and saved in `results/economics.json`
+  - [x] Result (config: ₪7,000 hardware, 65 W, 3 yr amort): API ₪0.000472/req (no cache), ₪0.000447 (cached), Cloud GPU ₪0.015417/req. Break-even **N* ≈ 524,694 req/mo** (no cache), **554,024** (cached). On-Prem only wins at very high volume — gpt-4o-mini API is extremely cheap per request. Saved `figures/break_even.png` + `results/economics_20260623_210522.json`.
 - [x] EC4-05 [Done] [Developer] [Priority: Medium] - Add a prompt-caching scenario — second API curve using `cache_discount_factor` from config | DoD: `figures/break_even.png` shows the cached-prompt API curve as a distinct line
 - [x] EC4-06 [Done] [Developer] [Priority: Low] - Add optional Cloud GPU comparison — third cost curve based on hourly GPU rental price × experiment runtime | DoD: `economics_config.json` includes `cloud_gpu_hourly_usd` and `cloud_gpu_runtime_hours` fields; `figures/break_even.png` shows all three curves (On-Prem, API, Cloud GPU) with all assumptions stated
   - [x] Validation: File is within the 150-line limit.
-- [ ] EC4-07 [Pending] [Developer] [Priority: High] - Write the Economics section of `README.md` | DoD: Includes break-even graph, full assumptions table (CAPEX, OPEX including maintenance, API pricing, caching discount, and cloud GPU if EC4-06 completed), and written recommendation on when On-Prem vs. API is preferred
+- [x] EC4-07 [Done] [Developer] [Priority: High] - Write the Economics section of `README.md` | DoD: Includes break-even graph, full assumptions table (CAPEX, OPEX including maintenance, API pricing, caching discount, and cloud GPU if EC4-06 completed), and written recommendation on when On-Prem vs. API is preferred
+  - [x] README §7 written: break-even figure embedded with caption, results table, full CAPEX/OPEX/API/cache/Cloud-GPU assumptions table, and On-Prem-vs-API recommendation.
 
 ---
 
@@ -171,7 +176,7 @@ The AI will post this notice in the chat when it reaches that task. You reply to
 - [ ] **M2** — B2-06 baseline failure captured and documented
 - [ ] **M3** — A3-04 Q4 run complete with all KPIs logged
 - [ ] **M4** — A3-09 AirLLM README section written
-- [ ] **M5** — EC4-07 Economics README section written
+- [x] **M5** — EC4-07 Economics README section written
 - [ ] **M6** — R5-11 final submission check passes
 
 ---

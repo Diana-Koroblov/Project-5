@@ -255,18 +255,61 @@ offline — no model download required.
 
 ## 7. Economics Analysis
 
-> **[PLACEHOLDER — fill in break-even numbers after running run_economics.py]**
+We compare the per-request cost of running the model **On-Premises** (this
+machine, amortized) against a third-party **API** (`gpt-4o-mini` pricing) and a
+rented **Cloud GPU**. The On-Prem per-request cost falls as monthly volume rises
+(fixed costs spread over more requests), whereas the API and Cloud GPU costs are
+flat per request. The **break-even point N\*** is where the On-Prem curve crosses
+the API curve — below it the API is cheaper, above it On-Prem wins.
 
-![Break-Even Analysis](figures/break_even.png)
+![Break-Even Analysis: On-Prem vs Cloud vs API](figures/break_even.png)
+
+*Figure: Cost per request (ILS, log-x) vs monthly request volume. The green
+On-Prem curve decreases with volume; the API (no-cache / cached) and Cloud GPU
+lines are flat. Vertical lines mark the break-even volumes N\*.*
+
+### Results
 
 | Metric | Value |
 |---|---|
-| On-Prem monthly fixed cost | — ILS |
-| API cost/request (no cache) | — ILS |
-| API cost/request (cached) | — ILS |
-| Cloud GPU cost/request | — ILS |
-| Break-even N* (no cache) | — requests/month |
-| Break-even N* (cached) | — requests/month |
+| On-Prem monthly fixed cost | **₪247.52 / month** |
+| API cost/request (no cache) | ₪0.000472 |
+| API cost/request (cached) | ₪0.000447 |
+| Cloud GPU cost/request | ₪0.015417 |
+| Break-even N\* (no cache) | **524,694 requests/month** |
+| Break-even N\* (cached) | **554,024 requests/month** |
+
+### Assumptions
+
+| Category | Parameter | Value |
+|---|---|---|
+| CAPEX | Hardware cost | ₪7,000 |
+| CAPEX | Amortization period | 3 years (→ ₪194.44/mo) |
+| OPEX | Electricity rate | ₪0.60 / kWh |
+| OPEX | Avg. power draw | 65 W (→ ₪28.08/mo at 24×30 h) |
+| OPEX | Annual maintenance | ₪300 (→ ₪25.00/mo) |
+| API | Input / output price | $0.15 / $0.60 per 1M tokens (`gpt-4o-mini`) |
+| API | Avg. tokens per request | 50 in / 200 out |
+| API | Cache discount factor | 0.1 (applied to input tokens) |
+| Cloud GPU | Hourly rate / runtime | $0.50/h × 0.5 min per request |
+| FX | USD → ILS | 3.7 |
+
+### Recommendation
+
+For this workload, the third-party API is **dramatically cheaper** until volume
+becomes extreme. On-Prem fixed costs (~₪247.52/month) only pay off beyond
+**~525,000 requests/month** (~17,500/day) — because `gpt-4o-mini` costs only
+~₪0.0005 per request. Prompt caching pushes the break-even slightly higher
+(~554k). The Cloud GPU option is the most expensive per request here (~₪0.0154)
+and never competitive for this low-token workload.
+
+**When On-Prem is preferred:** very high sustained volume (well above the
+break-even), or when **data privacy, offline operation, or no-per-call-billing**
+are hard requirements — none of which this cost model captures but which are
+often the real reason to self-host. **When the API is preferred:** low-to-moderate
+volume, spiky traffic, or when avoiding capital expenditure and operational
+overhead matters more than marginal per-request cost. (All figures regenerate via
+`uv run python experiments/run_economics.py`.)
 
 ---
 

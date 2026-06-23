@@ -41,7 +41,7 @@ class ExperimentConfig:
     cpu_tdp_watts: float
 
     @classmethod
-    def load(cls) -> "ExperimentConfig":
+    def load(cls) -> ExperimentConfig:
         """Load from config/experiment_config.json."""
         d = _load_json("experiment_config.json")
         return cls(
@@ -77,7 +77,7 @@ class EconomicsConfig:
     usd_to_ils_rate: float
 
     @classmethod
-    def load(cls) -> "EconomicsConfig":
+    def load(cls) -> EconomicsConfig:
         """Load from config/economics_config.json."""
         d = _load_json("economics_config.json")
         return cls(
@@ -107,7 +107,7 @@ def get_hf_token() -> str:
     """
     token = os.getenv("HF_TOKEN")
     if not token:
-        raise EnvironmentError(
+        raise OSError(
             "HF_TOKEN is not set. "
             "Create a .env file with HF_TOKEN=hf_<your_token>."
         )

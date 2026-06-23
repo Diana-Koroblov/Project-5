@@ -12,7 +12,6 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 import psutil
 
@@ -30,7 +29,7 @@ class MetricsResult:
     total_runtime_seconds: float = 0.0
     cpu_tdp_watts: float = 45.0
     output_text: str = ""
-    error: Optional[str] = None
+    error: str | None = None
 
     @property
     def tpot_seconds(self) -> float:
@@ -104,7 +103,7 @@ class InferenceTimer:
         self.t_end: float = 0.0
         self.token_timestamps: list[float] = []
 
-    def __enter__(self) -> "InferenceTimer":
+    def __enter__(self) -> InferenceTimer:
         self.t_start = time.perf_counter()
         return self
 
