@@ -94,14 +94,15 @@ FP16 (both direct and AirLLM) anchor the comparison as high-precision baselines.
 
 ## 2. Hardware Specifications
 
-> **TODO (Partner — P0-05):** Fill in the actual hardware before submission.
+
 
 | Component | Specification |
 |---|---|
-| CPU | TBD |
-| RAM | TBD GB |
-| Storage | TBD (HDD / SSD / NVMe) |
-| OS | TBD |
+| CPU | AMD Ryzen 9700x |
+| GPU | AMD Radeon RX 9070XT 16GB |
+| RAM | 32GB DDR5 |
+| Storage | 512GB NVME PCIE 4.0 |
+| OS | WINDOWS 11 PRO |
 | CPU TDP | TBD W (update `config/experiment_config.json` → `cpu_tdp_watts`) |
 | Hardware cost | TBD ILS (update `config/economics_config.json` → `hardware_cost_ils`) |
 
