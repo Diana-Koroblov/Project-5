@@ -98,11 +98,11 @@ FP16 (both direct and AirLLM) anchor the comparison as high-precision baselines.
 
 | Component | Specification |
 |---|---|
-| CPU | AMD Ryzen 9700x |
+| CPU | AMD Ryzen 9700X |
 | GPU | AMD Radeon RX 9070XT 16GB |
-| RAM | 32GB DDR5 |
-| Storage | 512GB NVME PCIE 4.0 |
-| OS | WINDOWS 11 PRO |
+| RAM | 32GB DDR5 5200MHz |
+| Storage | 512GB NVME PCIe 4.0 |
+| OS | Windows 11 Pro |
 | CPU TDP | TBD W (update `config/experiment_config.json` → `cpu_tdp_watts`) |
 | Hardware cost | TBD ILS (update `config/economics_config.json` → `hardware_cost_ils`) |
 
