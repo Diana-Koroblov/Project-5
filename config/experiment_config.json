@@ -7,5 +7,5 @@
   "quantization_levels": ["fp16", "4bit", "8bit"],
   "layer_shards_path": "./model_shards",
   "seed": 42,
-  "cpu_tdp_watts": 45
+  "cpu_tdp_watts": 65
 }
