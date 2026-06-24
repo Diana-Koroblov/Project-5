@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ex05.config import EconomicsConfig, ExperimentConfig
+from ex05.config import EconomicsConfig, ExperimentConfig, OllamaConfig
 
 
 @pytest.fixture
@@ -41,4 +41,19 @@ def economics_cfg() -> EconomicsConfig:
         cloud_gpu_hourly_usd=0.50,
         cloud_gpu_runtime_per_request_minutes=0.5,
         usd_to_ils_rate=3.7,
+    )
+
+
+@pytest.fixture
+def ollama_cfg() -> OllamaConfig:
+    """Deterministic OllamaConfig for testing (no file I/O, no live server)."""
+    return OllamaConfig(
+        host="http://localhost:11434",
+        num_predict=50,
+        temperature=0.0,
+        force_cpu=True,
+        quant_levels={"q4": "llama3.1:8b-instruct-q4_K_M"},
+        prompt="Explain supervised vs unsupervised learning.",
+        seed=42,
+        cpu_tdp_watts=65.0,
     )

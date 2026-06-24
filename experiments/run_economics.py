@@ -7,9 +7,7 @@ point, and saves a figure + JSON summary.
 Usage:
     uv run python experiments/run_economics.py
 
-Output:
-    figures/break_even.png
-    results/economics_<timestamp>.json
+Output: figures/break_even.png, results/economics_<timestamp>.json
 """
 
 from __future__ import annotations
@@ -34,9 +32,10 @@ _ROOT = Path(__file__).resolve().parents[1]
 
 def _build_request_range(cfg: EconomicsConfig) -> np.ndarray:
     """Return integer array of monthly request counts for the cost curves."""
+    linear_max = min(100, cfg.monthly_request_range_max) + 1
     return np.unique(
         np.concatenate([
-            np.arange(cfg.monthly_request_range_min, min(100, cfg.monthly_request_range_max) + 1),
+            np.arange(cfg.monthly_request_range_min, linear_max),
             np.geomspace(
                 max(1, cfg.monthly_request_range_min),
                 cfg.monthly_request_range_max,

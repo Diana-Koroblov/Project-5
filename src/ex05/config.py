@@ -99,6 +99,36 @@ class EconomicsConfig:
         )
 
 
+@dataclass(frozen=True)
+class OllamaConfig:
+    """Settings for the Ollama CPU-quantization experiment (GGUF backend)."""
+
+    host: str
+    num_predict: int
+    temperature: float
+    force_cpu: bool
+    quant_levels: dict[str, str]
+    prompt: str
+    seed: int
+    cpu_tdp_watts: float
+
+    @classmethod
+    def load(cls) -> OllamaConfig:
+        """Load Ollama settings nested under experiment_config.json -> 'ollama'."""
+        d = _load_json("experiment_config.json")
+        o = d["ollama"]
+        return cls(
+            host=o["host"],
+            num_predict=o["num_predict"],
+            temperature=float(o["temperature"]),
+            force_cpu=o["force_cpu"],
+            quant_levels=dict(o["quant_levels"]),
+            prompt=d["prompt"],
+            seed=d["seed"],
+            cpu_tdp_watts=float(d["cpu_tdp_watts"]),
+        )
+
+
 def get_hf_token() -> str:
     """Return the Hugging Face token from the environment.
 

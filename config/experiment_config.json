@@ -7,5 +7,17 @@
   "quantization_levels": ["fp16", "4bit", "8bit"],
   "layer_shards_path": "./model_shards",
   "seed": 42,
-  "cpu_tdp_watts": 65
+  "cpu_tdp_watts": 65,
+  "ollama": {
+    "host": "http://localhost:11434",
+    "num_predict": 200,
+    "temperature": 0,
+    "force_cpu": true,
+    "quant_levels": {
+      "fp16": "llama3.1:8b-instruct-fp16",
+      "q8": "llama3.1:8b-instruct-q8_0",
+      "q4": "llama3.1:8b-instruct-q4_K_M",
+      "q2": "llama3.1:8b-instruct-q2_K"
+    }
+  }
 }

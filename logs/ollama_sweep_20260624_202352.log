@@ -1,0 +1,47 @@
+============================================================
+OLLAMA CPU-QUANTIZATION SWEEP (GGUF / llama.cpp)
+============================================================
+Host       : http://localhost:11434
+Levels     : ['fp16', 'q8', 'q4', 'q2']
+num_predict: 200 | CPU-only: True
+============================================================
+
+--- fp16 (llama3.1:8b-instruct-fp16) ---
+  TTFT       : 17.16 s
+  TPOT       : 0.271 s/token
+  Throughput : 2.81 tok/s
+  Peak RAM   : 15.58 GB
+  Power (est): 1.2842 Wh
+  Tokens     : 200
+  Error      : None
+  Saved      : ollama_fp16_20260624_202504.json
+
+--- q8 (llama3.1:8b-instruct-q8_0) ---
+  TTFT       : 12.33 s
+  TPOT       : 0.152 s/token
+  Throughput : 4.70 tok/s
+  Peak RAM   : 8.56 GB
+  Power (est): 0.7684 Wh
+  Tokens     : 200
+  Error      : None
+  Saved      : ollama_q8_20260624_202548.json
+
+--- q4 (llama3.1:8b-instruct-q4_K_M) ---
+  TTFT       : 3.27 s
+  TPOT       : 0.086 s/token
+  Throughput : 9.76 tok/s
+  Peak RAM   : 5.19 GB
+  Power (est): 0.3699 Wh
+  Tokens     : 200
+  Error      : None
+  Saved      : ollama_q4_20260624_202609.json
+
+--- q2 (llama3.1:8b-instruct-q2_K) ---
+  TTFT       : 4.59 s
+  TPOT       : 0.056 s/token
+  Throughput : 12.75 tok/s
+  Peak RAM   : 3.57 GB
+  Power (est): 0.2833 Wh
+  Tokens     : 200
+  Error      : None
+  Saved      : ollama_q2_20260624_202626.json

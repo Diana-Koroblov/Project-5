@@ -1,0 +1,21 @@
+============================================================
+AIRLLM Q2 (2-bit) EXPERIMENT
+============================================================
+Model     : meta-llama/Meta-Llama-3.1-8B-Instruct
+Compression: 2bit
+Tokens    : 5 (reduced for time)
+Started   : 20260624_193846
+============================================================
+
+--- Results ---
+Scenario    : airllm_2bit
+TTFT        : 19.04 s
+TPOT        : 18.145 s/token
+Throughput  : 0.0456 tok/s
+Peak RAM    : 2.56 GB
+Power (est) : 1.9818 Wh
+Tokens gen  : 5
+Output      : 'Explain the difference between supervised and unsupervised learning in three paragraphs.\xa0\nSupervised learning is'
+Error       : None
+Saved JSON  : c:\Users\itaym\Documents\hw5-orchestration-airllm\Project-5\results\airllm_2bit_20260624_193846.json
+Saved log   : c:\Users\itaym\Documents\hw5-orchestration-airllm\Project-5\logs\airllm_q2_20260624_193846.log

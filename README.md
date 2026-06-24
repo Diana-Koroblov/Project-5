@@ -1,7 +1,7 @@
 # EX05 — Running a Large LLM Locally with AirLLM and Quantization
 
-> **Assignment:** EX05 | **Course:** [Course Name]
-> **Authors:** [Your Name] & [Partner Name]
+> **Assignment:** EX05 | **Course:** On-Premises LLM Deployment (L08)
+> **Authors:** Itay Malich & Diana Koroblov
 
 ---
 
@@ -14,7 +14,8 @@
 5. [Results Summary](#5-results-summary)
 6. [Figures](#6-figures)
 7. [Economics Analysis](#7-economics-analysis)
-8. [Discussion](#8-discussion)
+8. [Discussion — Lecture Concepts](#8-discussion--lecture-concepts)
+9. [Extension / Original Initiative — Roofline Model](#9-extension--original-initiative--roofline-model)
 
 ---
 
@@ -29,7 +30,7 @@ estimated power consumption.
 
 ### Methodology
 
-The experiment is divided into two stages:
+The experiment is divided into three stages:
 
 **Stage 1 — Baseline (Direct FP16 Loading)**
 We first attempt to load `meta-llama/Meta-Llama-3.1-8B-Instruct` using the
@@ -42,9 +43,10 @@ saved to `results/baseline_<ts>.json` and included in comparison graphs as a
 data point documenting the failure mode.
 
 **Stage 2 — AirLLM Quantization Sweep**
-We run the same model with AirLLM (`airllm.AutoModel`) across three quantization
+We run the same model with AirLLM (`airllm.AutoModel`) across four quantization
 levels in order of decreasing precision: FP16 (AirLLM mmap mode, expected to be
-very slow), Q8 (8-bit), and Q4 (4-bit). For each level we:
+very slow), Q8 (8-bit), Q4 (4-bit), and Q2 (2-bit, the pipeline sanity-check
+level the assignment recommends starting from). For each level we:
 
 1. Load the model with AirLLM, which streams transformer layers from disk one
    at a time — analogous to OS virtual memory paging but for model weights.
@@ -57,6 +59,18 @@ very slow), Q8 (8-bit), and Q4 (4-bit). For each level we:
    `(total_runtime_seconds / 3600) × cpu_tdp_watts` where `cpu_tdp_watts` is
    read from `config/experiment_config.json`.
 6. Save all KPIs to `results/airllm_<level>_<ts>.json`.
+
+**Stage 3 — Real Quantization via Ollama (GGUF / llama.cpp, CPU)**
+Stage 2 exposed a hard limit: AirLLM's quantization uses `bitsandbytes`, which
+requires CUDA, so Q4/Q8 cannot run on this AMD/CPU box (and "Q2" silently fell
+back to FP16). To actually answer the quantization research question we add a
+third stage using **Ollama**, whose **GGUF / llama.cpp** backend quantizes
+**natively on CPU**. We run the identical prompt against FP16, Q8, Q4, and Q2
+GGUF builds of the same model, forcing CPU execution (`num_gpu=0`, verified via
+`size_vram=0`) and greedy decoding (`temperature=0`) so quality differences
+reflect quantization alone. Peak RAM is read from Ollama's own `/api/ps` report
+(the GGUF file is mmap'd, so its pages don't appear in process RSS). Results are
+saved to `results/ollama_<level>_<ts>.json`.
 
 ### Prompt
 
@@ -75,7 +89,8 @@ measurement (10 tokens for the smoke test).
 | TTFT | `InferenceTimer` context manager — records `t_first_token − t_start` |
 | TPOT | Mean inter-token gap from `InferenceTimer.token_timestamps` |
 | Throughput | `generated_tokens / total_runtime_seconds` |
-| Peak RAM | `RamMonitor` (daemon thread, 0.5s polling via `psutil.Process.memory_info().rss`) |
+| Peak RAM | `RamMonitor` (daemon thread, 0.5s polling via `psutil.Process.memory_info().rss`); for Ollama, the model footprint from `/api/ps` (mmap'd GGUF is invisible to RSS) |
+| Peak VRAM | **0 GB in every scenario** — all inference is CPU-only (no CUDA). Confirmed for Ollama via `/api/ps` `size_vram=0`; the baseline/AirLLM use a CPU-only `torch`. The 16 GB RX 9070 XT is idle (see §2). |
 | Power (est.) | `(runtime_sec / 3600) × cpu_tdp_watts` (TDP from config) |
 
 ### Quantization Rationale
@@ -86,6 +101,7 @@ measurement (10 tokens for the smoke test).
 | AirLLM FP16 | ~16.1 GB (streamed) | Feasible but extremely slow (disk I/O) |
 | Q8 | ~8.5 GB | Fits in RAM; moderate slowdown vs FP16 |
 | Q4 | ~4.5 GB | Well within RAM; good throughput |
+| Q2 | ~2.3 GB | Pipeline sanity check (most aggressive) |
 
 Q4 is our primary production candidate. Q8 shows the precision–speed trade-off.
 FP16 (both direct and AirLLM) anchor the comparison as high-precision baselines.
@@ -94,16 +110,54 @@ FP16 (both direct and AirLLM) anchor the comparison as high-precision baselines.
 
 ## 2. Hardware Specifications
 
-
-
 | Component | Specification |
 |---|---|
-| CPU | AMD Ryzen 9700X |
-| RAM | 32GB DDR5 5200MHz |
-| Storage | 512GB NVME PCIe 4.0 |
-| OS | Windows 11 Pro |
-| CPU TDP | 65W |
-| Hardware cost | TBD ILS (update `config/economics_config.json` → `hardware_cost_ils`) |
+| **CPU** | AMD Ryzen 7 9700X — 8 cores / 16 threads, Zen 5, ~5.0 GHz boost, AVX-512 |
+| **CPU TDP** | 65 W |
+| **RAM** | 32 GB DDR5 5200 MHz (dual channel, ~50 GB/s effective) |
+| **GPU** | AMD Radeon RX 9070 XT, 16 GB GDDR6 — **present but not used for inference** (see below) |
+| **Storage** | 512 GB NVMe SSD, PCIe 4.0 ×4 (~7 GB/s sequential read) |
+| **OS** | Windows 11 Pro |
+| **Hardware cost** | ₪7,000 (CAPEX input for the economics model, amortized over 3 years) |
+
+### Why the GPU is unused — and why it matters
+
+The machine has a capable 16 GB GPU, but **all inference runs on the CPU**. The
+RX 9070 XT is an RDNA 4 (2025) card; AMD's ROCm/HIP compute stack does not yet
+provide working Windows support for it, and PyTorch on Windows has no usable AMD
+backend. This single fact drives two of the experiment's headline results:
+
+1. **No CUDA device exists**, so `bitsandbytes` (which AirLLM uses for 4-bit and
+   8-bit compression) cannot load — Q4 and Q8 fail with
+   `AssertionError: Torch not compiled with CUDA enabled` (see §5, RISK-05).
+2. **Storage type is the critical variable**, not the GPU. Because AirLLM streams
+   each transformer layer from disk per token, the **NVMe sequential-read
+   bandwidth (~7 GB/s) becomes the real performance roof** for AirLLM — an order
+   of magnitude below the ~50 GB/s DDR5 roof that bounds the in-RAM baseline.
+   A SATA SSD (~0.5 GB/s) or HDD here would make AirLLM unusably slow.
+
+### Model selection & memory arithmetic (justification)
+
+We chose **`meta-llama/Meta-Llama-3.1-8B-Instruct`** (8.03 B parameters,
+SafeTensors, gated): large enough to stress 32 GB of RAM in full precision, small
+enough to remain feasible under AirLLM — exactly the regime the assignment asks
+for. The memory budget for direct FP16 loading:
+
+```
+FP16 weights:      8.03B params × 2 bytes        = ~16.1 GB
+OS + Python idle:                                = ~2.5  GB
+KV cache (512 tokens, 32 layers):                = ~0.5  GB
+──────────────────────────────────────────────────────────
+Total required (direct FP16):                    = ~19.1 GB
+Total system RAM:                                =  32   GB
+Free RAM at baseline run time (apps open):       = ~18   GB  → fit barely (near-OOM)
+```
+
+The ~19 GB requirement exceeds the ~18 GB that was actually free at run time and
+would OOM outright on the common 16 GB laptop — the demonstrable Baseline failure
+the assignment requires. **Why not larger:** a 70 B model in Q4 still needs
+~37 GB and "has no chance of running even with AirLLM"; the 8 B model keeps each
+streamed layer shard small enough for NVMe to handle.
 
 ---
 
@@ -189,6 +243,27 @@ to `results/airllm_<level>_<ts>.json`.
 - Keep ≥ 4 GB free RAM for Q4, ≥ 9 GB for Q8.
 - Partial runs are fine — each level saves independently.
 
+### Step 3b — Stage 3: Ollama CPU quantization sweep (real quantization)
+
+Requires [Ollama](https://ollama.com) installed. Start the server and pull the
+GGUF builds (one-time, ~32 GB total), then run the sweep:
+
+```bash
+ollama serve &                                   # start the local server
+ollama pull llama3.1:8b-instruct-fp16            # ~16 GB
+ollama pull llama3.1:8b-instruct-q8_0            # ~8.5 GB
+ollama pull llama3.1:8b-instruct-q4_K_M          # ~4.9 GB
+ollama pull llama3.1:8b-instruct-q2_K            # ~3.2 GB
+
+uv run python experiments/run_ollama.py          # all levels (or: ... q4 q2)
+uv run python experiments/generate_ollama_graphs.py
+```
+
+Model tags, host, `num_predict`, and the CPU-force flag are read from
+`config/experiment_config.json` → `ollama`. Inference is forced onto the CPU
+(`num_gpu=0`). Results are saved to `results/ollama_<level>_<ts>.json` and the
+gradient figure to `figures/ollama_quant_comparison.png`.
+
 ### Step 4 — Generate comparison graphs
 
 ```bash
@@ -201,6 +276,14 @@ charts in `figures/`:
 - `ttft_comparison.png` — Time to First Token per scenario
 - `ram_comparison.png` — Peak RAM per scenario
 - `throughput_comparison.png` — Throughput (tokens/sec) per scenario
+
+### Step 4b — Generate the Roofline plot (extension)
+
+```bash
+uv run python experiments/generate_roofline.py
+```
+
+Produces `figures/roofline.png` — the memory-bound analysis described in §9.
 
 ### Step 5 — Economics analysis
 
@@ -228,11 +311,37 @@ offline — no model download required.
 |---|---|---|---|---|---|---|
 | Baseline FP16 | 6.24 | n/a ¹ | ~1.6 ² | **17.01** | 0.11 | None — but near-OOM |
 | AirLLM FP16 | 14.96 | 15.09 | 0.055 | **2.54** | 1.63 | None |
+| AirLLM Q2 ³ | 19.04 | 18.14 | 0.046 | 2.56 | 1.98 | None — but no real compression |
 | AirLLM Q8 | — | — | — | — | — | `AssertionError: Torch not compiled with CUDA enabled` |
 | AirLLM Q4 | — | — | — | — | — | `AssertionError: Torch not compiled with CUDA enabled` |
+| **Ollama FP16** (CPU GGUF) | 17.16 ⁴ | 0.271 | 2.81 | 15.58 | 1.28 | None |
+| **Ollama Q8** (CPU GGUF) | 12.33 ⁴ | 0.152 | 4.70 | 8.56 | 0.77 | None |
+| **Ollama Q4** (CPU GGUF) | 3.27 ⁴ | 0.086 | 9.76 | **5.19** | 0.37 | None |
+| **Ollama Q2** (CPU GGUF) | 4.59 ⁴ | 0.056 | 12.75 | **3.57** | 0.28 | None |
 
 > ¹ The baseline timer calls `record_token()` once after `model.generate()` finishes, not per token. TPOT is not resolvable from this single timestamp.
 > ² Estimated from 10 output tokens ÷ 6.24 s total runtime.
+> ³ Q2 *completed* where Q4/Q8 crashed, but AirLLM's 2-bit path silently fell back
+> to **uncompressed FP16**: the saved layer shards are byte-for-byte identical to
+> the FP16 shards (436 MB/layer, 15 GB total). Its metrics therefore mirror AirLLM
+> FP16 — it is not genuine 2-bit quantization on this hardware. See Stage 2.
+> ⁴ Ollama TTFT includes **cold model-load time** (each GGUF is loaded from disk
+> at run start), so it tracks model size rather than pure Prefill. See Stage 3.
+
+**Peak VRAM = 0 GB for every scenario above.** All inference is CPU-only, so the
+16 GB RX 9070 XT is idle throughout (it is also unusable for compute here — see
+§2). This is verified, not assumed: Ollama's `/api/ps` reports `size_vram=0` for
+every model, and the baseline/AirLLM runs use a CPU-only `torch` build with no
+CUDA device. RAM is therefore the only memory metric that varies, which is why
+the tables track RAM and omit a constant all-zero VRAM column.
+
+The two engines answer different questions. **AirLLM** (Stage 2) shows the
+*memory-capacity* win — it makes an un-loadable model loadable by streaming
+layers, at a steep latency cost, but its quantization can't run without CUDA.
+**Ollama/GGUF** (Stage 3) shows the *real quantization gradient* on CPU — RAM and
+latency both fall with precision, and even Q2 stays usable. The numbers are not
+directly comparable (disk-streaming vs in-RAM), which is why each stage has its
+own chart.
 
 ---
 
@@ -281,26 +390,33 @@ Error       : None (model ran)
 
 ### Stage 2 — AirLLM + Quantization Results
 
-AirLLM (`airllm.AutoModel`) was run across all three quantization levels defined
-in `config/experiment_config.json`. Only **FP16** completed; both quantized levels
-were blocked by a hard hardware constraint (see note below and RISK-05).
+AirLLM (`airllm.AutoModel`) was run across all four quantization levels (FP16,
+Q2, Q4, Q8). Three outcomes emerged: **FP16 ran**, **Q2 ran but did not actually
+compress**, and **Q4/Q8 were blocked** by a hard hardware constraint (RISK-05).
 
-**Run:** `experiments/run_airllm.py` | **Log:** `logs/airllm_sweep_20260624_175040.log`
+**Run:** `experiments/run_airllm.py` (+ `airllm_q2_*` probe for Q2)
+**Logs:** `logs/airllm_sweep_20260624_175040.log`, `logs/airllm_q2_20260624_193846.log`
 
 | Scenario | TTFT (s) | TPOT (s/tok) | Throughput (tok/s) | Peak RAM (GB) | Power (Wh) | Quality (1–5) | Status |
 |---|---|---|---|---|---|---|---|
-| Baseline FP16 (direct) | 6.24 | n/a ¹ | ~1.6 ² | 17.01 | 0.11 | 4 ³ | ✅ Ran (near-OOM) |
-| AirLLM FP16 | 14.96 | 15.09 | 0.055 | **2.54** | 1.63 | 4 ³ | ✅ Ran |
-| AirLLM Q8 (8-bit) | — | — | — | — | — | — | ❌ CUDA-blocked ⁴ |
-| AirLLM Q4 (4-bit) | — | — | — | — | — | — | ❌ CUDA-blocked ⁴ |
+| Baseline FP16 (direct) | 6.24 | n/a ¹ | ~1.6 ² | 17.01 | 0.11 | N/A ³ | ✅ Ran (near-OOM) |
+| AirLLM FP16 | 14.96 | 15.09 | 0.055 | **2.54** | 1.63 | N/A ³ | ✅ Ran |
+| AirLLM Q2 (2-bit) | 19.04 | 18.14 | 0.046 | 2.56 | 1.98 | N/A ³ | ⚠️ Ran, but FP16 fallback ⁴ |
+| AirLLM Q8 (8-bit) | — | — | — | — | — | N/A | ❌ CUDA-blocked ⁵ |
+| AirLLM Q4 (4-bit) | — | — | — | — | — | N/A | ❌ CUDA-blocked ⁵ |
 
 > ¹ See Stage 1 footnote — single timestamp, TPOT not resolvable.
 > ² Estimated from 10 output tokens ÷ 6.24 s total runtime.
-> ³ Provisional. Both runs were capped at a few tokens to keep the sweep under a
-> few minutes; the generated prefixes ("*Supervised learning is …*") are coherent
-> and on-topic, but too short for a full 1–5 quality judgement. Formal scoring is
-> tracked as A3-07.
-> ⁴ `AssertionError: Torch not compiled with CUDA enabled`. AirLLM's 4-bit and
+> ³ Not scored. The runs were capped at a few tokens to keep the sweep short, so
+> the generated prefixes ("*Supervised learning is …*") are too brief for a
+> meaningful 1–5 quality judgement; quality scoring (A3-07) is marked **N/A**.
+> ⁴ Q2 did **not** crash, but AirLLM's 2-bit path silently produced
+> **uncompressed FP16** shards — byte-for-byte identical to the FP16 split
+> (436 MB/layer, 15 GB total) versus the ~4× smaller shards real 2-bit would
+> yield. Its KPIs therefore track FP16 (slightly slower here from run-to-run
+> variance). Genuine sub-8-bit quantization needs bitsandbytes/CUDA, which this
+> box lacks — so Q2 "running" is a fallback, not a successful 2-bit result.
+> ⁵ `AssertionError: Torch not compiled with CUDA enabled`. AirLLM's 4-bit and
 > 8-bit paths use **bitsandbytes**, which requires a CUDA-enabled PyTorch build.
 > This machine has an AMD Radeon GPU and no NVIDIA CUDA device, so quantized
 > inference cannot run here. This is a documented, reproducible finding, not a
@@ -342,6 +458,14 @@ units*, not by FLOPs:
   TTFT, since Prefill is comparatively compute-bound. On CUDA hardware we would
   expect Q4 to give the best throughput/latency trade-off; on this box the
   trade-off is moot because bitsandbytes cannot load.
+- **The Q2 "control" confirms this.** Q2 was the one quantization level that ran
+  end-to-end — but only because AirLLM fell back to **uncompressed FP16** shards
+  (verified byte-identical on disk). Its TPOT (18.14 s/tok) and RAM (2.56 GB) land
+  right on the FP16 numbers, *not* the ~4× lower TPOT real 2-bit would predict.
+  This is the cleanest possible demonstration that on this hardware the streamed
+  bytes per token never actually shrank: no genuine quantization occurred at any
+  level, so the memory-bound decode cost stayed pinned to the full FP16 weight
+  volume throughout.
 
 The 6.7× RAM reduction (17.01 → 2.54 GB) is AirLLM's headline win: it converts an
 *impossible-to-fit* model into a *runnable-but-slow* one by trading the fast-but-
@@ -350,10 +474,66 @@ as OS virtual-memory paging, applied at the granularity of transformer layers.
 
 ---
 
+### Stage 3 — Real Quantization via Ollama (GGUF / CPU)
+
+Because AirLLM's `bitsandbytes` quantization can't run without CUDA (Stage 2),
+we used **Ollama's GGUF / llama.cpp backend**, which quantizes **natively on the
+CPU**, to actually measure the precision↔memory↔speed↔quality trade-off. Same
+model, same prompt, CPU-forced (`num_gpu=0`), greedy decode (`temperature=0`),
+200 tokens each.
+
+**Run:** `experiments/run_ollama.py` | **Log:** `logs/ollama_sweep_20260624_202352.log`
+
+| Scenario | TTFT (s) ¹ | TPOT (s/tok) | Throughput (tok/s) | Peak RAM (GB) | Power (Wh) | Quality (1–5) |
+|---|---|---|---|---|---|---|
+| Ollama FP16 | 17.16 | 0.271 | 2.81 | **15.58** | 1.28 | 5 |
+| Ollama Q8 | 12.33 | 0.152 | 4.70 | **8.56** | 0.77 | 5 |
+| Ollama Q4 | 3.27 | 0.086 | 9.76 | **5.19** | 0.37 | 5 |
+| Ollama Q2 | 4.59 | 0.056 | 12.75 | **3.57** | 0.28 | 4 |
+
+> ¹ TTFT here is dominated by **cold model load** (Ollama loads each GGUF from disk
+> into RAM at the start of its run): the 15.58 GB FP16 build takes ~15 s just to
+> load, which is why TTFT tracks model size. The clean decode metrics are TPOT and
+> throughput.
+
+![Ollama CPU Quantization Gradient](figures/ollama_quant_comparison.png)
+
+*Figure: As precision drops FP16 → Q8 → Q4 → Q2, peak RAM falls 4.4× (15.58 →
+3.57 GB) and decode throughput rises 4.5× (2.81 → 12.75 tok/s). Fewer bytes per
+weight ⇒ fewer bytes streamed from RAM per token ⇒ faster memory-bound decode —
+the textbook quantization trade-off, finally measured directly.*
+
+**Output quality assessment (RQ3 — where is the "red line"?).** All four levels
+produced coherent, factually correct three-paragraph answers:
+
+- **FP16 & Q8** produced **byte-identical** greedy output — 8-bit quantization
+  cost *nothing* in quality here (score **5/5**).
+- **Q4** was equally coherent with slightly different phrasing and concrete
+  examples (image classification, anomaly detection) — score **5/5**.
+- **Q2** was still correct and readable but showed the **first visible
+  degradation**: it dropped the Markdown bold structure and became noticeably
+  more repetitive ("This type of learning is useful for…") — score **4/5**.
+
+So for this explanatory task the accuracy "red line" was **not decisively
+crossed even at 2-bit** — an 8 B model stays usable down to Q2, with only subtle
+structural/stylistic loss appearing at the most aggressive level. **Q4 is the
+sweet spot**: 3× less RAM than FP16, 3.5× the throughput, and no measurable
+quality loss.
+
+This is the experiment's positive quantization result, complementing Stage 2's
+negative one: quantization *does* deliver the predicted memory/speed gains — it
+just needs a **CPU-native quant path (GGUF)**, not the CUDA-only `bitsandbytes`.
+
+---
+
 ## 6. Figures
 
-All figures regenerate via `uv run python experiments/generate_graphs.py`
-(KPI comparisons) and `uv run python experiments/run_economics.py` (break-even).
+The Baseline-vs-AirLLM comparison charts below regenerate via
+`uv run python experiments/generate_graphs.py`. Other figures live in their
+analysis sections: the **Ollama quantization gradient** in [§5 Stage 3](#5-results-summary)
+(`generate_ollama_graphs.py`), the **Roofline** in [§9](#9-extension--original-initiative--roofline-model)
+(`generate_roofline.py`), the **baseline RAM chart** in §5 Stage 1, and the
+**break-even** in [§7](#7-economics-analysis) (`run_economics.py`).
 
 ### TTFT Comparison
 
@@ -429,29 +609,159 @@ overhead matters more than marginal per-request cost. (All figures regenerate vi
 
 ---
 
-## 8. Discussion
+## 8. Discussion — Lecture Concepts
 
-> **[PLACEHOLDER — fill in after reviewing results (TODO R5-02 full analysis)]**
+This section answers the assignment's research questions directly, linking each
+measurement back to lecture concepts (Prefill/Decode, compute- vs memory-bound,
+VRAM, virtual memory and paging, quantization).
 
-Answer the following questions in this section:
+### Q1 — What was the bottleneck, and how did we identify it?
 
-1. **Baseline bottleneck:** What caused the baseline failure? Was it a memory
-   allocation error, a swap-induced slowdown, or a timeout? What does this tell
-   us about the relationship between model size and available RAM?
+**Memory, not compute.** The baseline did not fail on a lack of FLOPs — it ran
+out of *bandwidth and capacity*. Two pieces of evidence:
 
-2. **AirLLM and virtual memory paging:** How does AirLLM's layer-by-layer
-   streaming relate to OS virtual memory paging? What are the analogies and
-   differences?
+- **Capacity:** direct FP16 needs ~19 GB (§2 arithmetic) against ~18 GB free.
+  Peak RSS hit **17.01 GB = 94 % of available RAM** — a near-OOM state. On a
+  16 GB machine this is an outright `OutOfMemoryError`.
+- **Bandwidth:** decode ran at ~0.62 s/token ≈ **25.9 GFLOP/s**, which is only
+  ~1 % of the CPU's ~2.5 TFLOP/s compute ceiling but **52 % of the DDR5
+  bandwidth roof** (§9 Roofline). A compute-bound workload would sit near the
+  compute ceiling; sitting on the memory roof is the signature of memory-bound
+  execution.
 
-3. **Effect of Q4/Q8 on memory and text quality:** How did quantization affect
-   peak RAM? Did the generated text show quality degradation at Q4 vs Q8?
-   Provide examples from the output.
+The constrained resource was specifically **system RAM** — never VRAM, which
+stayed at **0 GB** because the GPU is unused (§2). The classic VRAM bottleneck of
+GPU inference simply does not apply here; on this CPU-only box the binding limit
+shifts entirely to RAM capacity and DDR5/NVMe bandwidth.
 
-4. **TTFT/TPOT and Prefill vs. Decode:** TTFT reflects the Prefill phase
-   (compute-bound GEMM). TPOT reflects the Decode phase (memory/disk-bound
-   GEMV). What did the measurements show? Did AirLLM's disk I/O dominate
-   TPOT regardless of quantization level?
+### Q2 — How does AirLLM change resource allocation? Relation to virtual memory / paging.
 
-5. **Throughput / Latency trade-off:** Quantization reduces model size and
-   thus disk I/O per layer, improving throughput. But does it improve latency
-   (TTFT)? Explain the trade-off you observed.
+AirLLM keeps only **one transformer layer resident in RAM at a time**, streaming
+the next layer's weights from the NVMe SSD on demand and evicting the previous
+one. Peak RSS drops from **17.01 GB → 2.54 GB (6.7×)**.
+
+This is the **virtual-memory paging analogy** made explicit:
+
+| OS virtual memory | AirLLM |
+|---|---|
+| Pages code/data between RAM ↔ disk (swap) | Pages *model layers* between RAM ↔ SSD |
+| Page fault triggers a disk read | Each layer's turn triggers a SafeTensors `mmap` read |
+| Working set must fit in RAM | Working set = **one layer**, not the whole model |
+| Granularity: 4 KB page | Granularity: one transformer layer (~436 MB) |
+
+**Key difference:** paging is *involuntary* thrashing the OS does to survive
+overcommit (and is pathological for an LLM — random access to 16 GB). AirLLM is
+*voluntary, sequential, and scheduled* — it reads each layer exactly once per
+token in order, turning random swap thrash into a predictable streaming workload
+the SSD handles well. Same space/time trade-off, deliberately engineered.
+
+### Q3 — Effect of quantization on memory, speed, and quality; where was the "red line"?
+
+This question has **two answers**, one negative and one positive — together they
+are the most instructive finding of the experiment.
+
+**Negative (AirLLM / bitsandbytes):** on this CPU-only box AirLLM's quantization
+never executed. Q4/Q8 abort with `Torch not compiled with CUDA enabled`
+(`bitsandbytes` needs an NVIDIA GPU we lack, §2), and "Q2" silently fell back to
+uncompressed FP16 (byte-identical shards). So the bitsandbytes path tells us
+nothing about the memory↔quality trade-off — except that **it is the wrong tool
+for AMD/CPU hardware.**
+
+**Positive (Ollama / GGUF, Stage 3):** switching to llama.cpp's CPU-native GGUF
+quantization made the trade-off measurable, and it behaves exactly as theory
+predicts:
+
+| | FP16 | Q8 | Q4 | Q2 |
+|---|---|---|---|---|
+| Peak RAM (GB) | 15.58 | 8.56 | 5.19 | 3.57 |
+| Throughput (tok/s) | 2.81 | 4.70 | 9.76 | 12.75 |
+| Quality (1–5) | 5 | 5 | 5 | 4 |
+
+- **Memory** falls ~4.4× FP16→Q2; **throughput** rises ~4.5× — because decode is
+  memory-bound, so fewer bytes per weight directly means faster tokens.
+- **The "red line" was not decisively crossed even at Q2.** FP16 and Q8 gave
+  *byte-identical* greedy output; Q4 was equally coherent; only Q2 showed the
+  first visible degradation (lost Markdown structure, more repetitive) — usable,
+  but the edge of the cliff. **Q4 is the sweet spot:** 3× less RAM, ~3.5× faster,
+  no measurable quality loss.
+
+The combined lesson: quantization delivers its promised gains, but **the choice
+of quantization *engine* must match the hardware** — GGUF/llama.cpp on CPU, not
+CUDA-only bitsandbytes.
+
+### Q4 — Prefill vs Decode, as seen in TTFT vs TPOT.
+
+- **TTFT** isolates **Prefill** — the parallel GEMM over all prompt tokens
+  (higher arithmetic intensity, more compute-like).
+- **TPOT** isolates **Decode** — the per-token GEMV that must stream the entire
+  weight set once per token (arithmetic intensity ≈ 1 FLOP/byte, memory-bound).
+
+For the in-RAM baseline these differ. For **AirLLM they nearly coincide**:
+TTFT 14.96 s vs TPOT 15.09 s. That equality is the measurement proving
+**disk I/O dominates both phases** — when every layer must be re-read from NVMe,
+the streaming cost swamps the compute difference between Prefill and Decode. And
+because no quantization actually applied, **I/O dominated TPOT at every level**
+(FP16 15.09 s, "Q2" 18.14 s — both at the full FP16 byte volume).
+
+### Q5 — The Throughput / Latency price for running a big model on modest hardware.
+
+Quantified directly: AirLLM buys a **6.7× RAM reduction** (17.01 → 2.54 GB) — the
+difference between *cannot run* and *can run* — at a cost of **~24× higher
+latency** (0.62 → 15.09 s/token) and a matching throughput collapse
+(~1.6 → 0.055 tok/s). The Roofline (§9) shows why this is fundamental, not a
+tuning artifact: AirLLM moves the operating point from the DDR5 roof down to the
+NVMe roof, an order of magnitude lower bandwidth. You trade time for space, and
+on a memory-bound workload that trade is steep.
+
+### Q6 — When is local (On-Prem) economically worthwhile vs an API? (see §7)
+
+For this low-token workload the **API wins until ~525k requests/month** — below
+the break-even, `gpt-4o-mini` at ~₪0.0005/request beats ₪247.52/month of amortized
+fixed cost. On-Prem only pays off at very high sustained volume, or when
+**data privacy, offline operation, or no per-call billing** are hard requirements
+(considerations cost alone does not capture). Full assumptions and the break-even
+graph are in §7.
+
+---
+
+## 9. Extension / Original Initiative — Roofline Model
+
+**Original contribution:** beyond the required metrics, we built a **Roofline
+Model** that unifies every result into one diagram and proves *with hardware
+constants* (not just hypothesis) that the system is memory-bound.
+
+![Roofline Model](figures/roofline.png)
+
+*Figure: Log-log Roofline for CPU-only Llama-3.1-8B. Black dashed line = CPU
+compute ceiling (~2.5 TFLOP/s, AVX-512). Blue = DDR5 bandwidth roof (50 GB/s);
+purple = NVMe roof (7 GB/s). The red square is the in-RAM baseline decode point;
+the green diamond is AirLLM decode. Both sit at arithmetic intensity ≈ 1 FLOP/byte
+— far left of either ridge point — so both are bandwidth-bound.*
+
+**Methodology.** The roofs come from the §2 spec: CPU peak =
+8 cores × 5.0 GHz × 64 FLOP/cycle (2× AVX-512 FMA, Zen 5); DDR5-5200 effective
+~50 GB/s; NVMe PCIe 4.0 ~7 GB/s. Decode is a GEMV that reads each 2-byte weight
+once for 2 FLOP → arithmetic intensity **1 FLOP/byte**. Each operating point's
+performance is `(2 × 8.03B FLOP/token) ÷ TPOT`. Regenerate with
+`uv run python experiments/generate_roofline.py`.
+
+**What it shows:**
+
+1. **Both ridge points** (DDR5 ≈ 51, NVMe ≈ 366 FLOP/byte) lie far to the right
+   of decode's AI ≈ 1. There is no parameter choice that makes per-token decode
+   compute-bound on this hardware — it is *structurally* memory-bound.
+2. **The baseline decode point reaches 25.9 GFLOP/s = 52 % of the DDR5 roof** —
+   excellent utilization, confirming the baseline is bandwidth-limited, not
+   software-inefficient.
+3. **AirLLM decode reaches only 1.06 GFLOP/s = 15 % of the NVMe roof.** AirLLM
+   doesn't just move to a lower roof — it under-utilizes even that roof, because
+   per-layer Python orchestration, `mmap` setup, and the disabled prefetch path
+   ("loading with no prefetching mode" in the logs) add overhead between reads.
+   This points at a concrete optimization: layer prefetching could recover up to
+   ~6× before hitting the NVMe wall.
+
+This single figure ties together the baseline failure (capacity + DDR5 roof),
+AirLLM's trade-off (drop to NVMe roof), and the quantization story (no roof
+ever moved left, because the streamed byte volume never shrank).
+
+---

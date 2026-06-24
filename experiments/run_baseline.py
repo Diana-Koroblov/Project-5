@@ -41,7 +41,7 @@ def main() -> None:
     with out_path.open("w") as f:
         json.dump(result.to_dict(), f, indent=2)
 
-    print(f"\n--- Results ---")
+    print("\n--- Results ---")
     print(f"Peak RAM    : {result.peak_ram_gb:.2f} GB")
     print(f"Runtime     : {result.total_runtime_seconds:.1f}s")
     print(f"Power (est) : {result.estimated_power_wh:.4f} Wh")

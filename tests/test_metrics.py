@@ -11,24 +11,23 @@ from unittest.mock import MagicMock, patch
 
 from ex05.metrics import InferenceTimer, MetricsResult, RamMonitor
 
-
 # ---------------------------------------------------------------------------
 # MetricsResult
 # ---------------------------------------------------------------------------
 
 class TestMetricsResult:
     def _make(self, **kwargs) -> MetricsResult:
-        defaults = dict(
-            scenario="test",
-            prompt_tokens=10,
-            generated_tokens=5,
-            ttft_seconds=1.0,
-            token_timestamps=[1.0, 1.5, 2.5, 4.0],
-            peak_ram_gb=4.0,
-            total_runtime_seconds=10.0,
-            cpu_tdp_watts=45.0,
-            output_text="hello",
-        )
+        defaults = {
+            "scenario": "test",
+            "prompt_tokens": 10,
+            "generated_tokens": 5,
+            "ttft_seconds": 1.0,
+            "token_timestamps": [1.0, 1.5, 2.5, 4.0],
+            "peak_ram_gb": 4.0,
+            "total_runtime_seconds": 10.0,
+            "cpu_tdp_watts": 45.0,
+            "output_text": "hello",
+        }
         defaults.update(kwargs)
         return MetricsResult(**defaults)
 
