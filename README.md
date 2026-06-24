@@ -16,6 +16,7 @@
 7. [Economics Analysis](#7-economics-analysis)
 8. [Discussion — Lecture Concepts](#8-discussion--lecture-concepts)
 9. [Extension / Original Initiative — Roofline Model](#9-extension--original-initiative--roofline-model)
+10. [License, Credits & Contributing](#10-license-credits--contributing)
 
 ---
 
@@ -763,5 +764,54 @@ performance is `(2 × 8.03B FLOP/token) ÷ TPOT`. Regenerate with
 This single figure ties together the baseline failure (capacity + DDR5 roof),
 AirLLM's trade-off (drop to NVMe roof), and the quantization story (no roof
 ever moved left, because the streamed byte volume never shrank).
+
+---
+
+## 10. License, Credits & Contributing
+
+### License
+
+Released under the **MIT License** — see [LICENSE](LICENSE).
+© 2026 Itay Malich & Diana Koroblov.
+
+### Authors
+
+| Author | Role |
+|---|---|
+| **Itay Malich** | Experiment design, implementation, analysis |
+| **Diana Koroblov** | PRD / requirements, hardware, review |
+
+### Credits & Third-Party Components
+
+This experiment stands on open-source work, used under their respective licenses:
+
+| Component | Purpose | License |
+|---|---|---|
+| [AirLLM](https://github.com/lyogavin/airllm) | Layer-by-layer model streaming | MIT |
+| [Ollama](https://ollama.com) + [llama.cpp](https://github.com/ggml-org/llama.cpp) | CPU GGUF quantized inference | MIT |
+| [Hugging Face `transformers`](https://github.com/huggingface/transformers) | Model loading, tokenization | Apache-2.0 |
+| [PyTorch](https://pytorch.org) | Tensor backend (CPU) | BSD-3-Clause |
+| [Meta Llama 3.1](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct) | The model under test | Llama 3.1 Community License |
+| `matplotlib`, `numpy`, `psutil`, `python-dotenv` | Plotting, math, monitoring, secrets | BSD / MIT |
+| [`uv`](https://docs.astral.sh/uv/), [`ruff`](https://docs.astral.sh/ruff/), `pytest` | Tooling | MIT / Apache-2.0 |
+
+The Llama 3.1 weights are **not** redistributed in this repository; they are
+pulled at runtime from Hugging Face / the Ollama registry under Meta's license,
+which requires accepting the terms and attribution ("Built with Llama").
+
+### Contributing
+
+This is an academic assignment and is not accepting external contributions.
+To run, modify, or reproduce it locally:
+
+1. Fork/clone the repo and run `uv sync` (see §3).
+2. Follow the [Execution Instructions](#4-execution-instructions) to reproduce
+   all results and figures.
+3. Keep the project standards intact before proposing any change:
+   - `uv run ruff check .` → zero violations
+   - `uv run pytest tests/ --cov=src/ex05 --cov-fail-under=85` → all green
+   - every source file ≤ 150 lines; no secrets committed (use `.env`).
+
+Bug reports or questions: open a GitHub issue on the repository.
 
 ---
