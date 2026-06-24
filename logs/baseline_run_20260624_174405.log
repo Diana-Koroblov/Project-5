@@ -1,0 +1,20 @@
+============================================================
+BASELINE EXPERIMENT — Direct FP16 Loading
+============================================================
+Model  : meta-llama/Meta-Llama-3.1-8B-Instruct
+Prompt : Explain the difference between supervised and unsupervised l...
+WARNING: Expected to OOM or time out. Monitor system RAM.
+============================================================
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|##5       | 1/4 [00:02<00:06,  2.31s/it]Loading checkpoint shards:  50%|#####     | 2/4 [00:04<00:04,  2.34s/it]Loading checkpoint shards:  75%|#######5  | 3/4 [00:07<00:02,  2.45s/it]Loading checkpoint shards: 100%|##########| 4/4 [00:07<00:00,  1.73s/it]Loading checkpoint shards: 100%|##########| 4/4 [00:07<00:00,  1.97s/it]
+C:\Users\itaym\Documents\hw5-orchestration-airllm\Project-5\.venv\Lib\site-packages\transformers\generation\configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+C:\Users\itaym\Documents\hw5-orchestration-airllm\Project-5\.venv\Lib\site-packages\transformers\generation\configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+
+--- Results ---
+Peak RAM    : 17.01 GB
+Runtime     : 6.2s
+Power (est) : 0.1127 Wh
+Error       : None (model ran)
+Saved to    : C:\Users\itaym\Documents\hw5-orchestration-airllm\Project-5\results\baseline_20260624_174423.json

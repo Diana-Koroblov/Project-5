@@ -1,0 +1,300 @@
+============================================================
+AIRLLM QUANTIZATION SWEEP  (probe: 5 tokens)
+============================================================
+Model  : meta-llama/Meta-Llama-3.1-8B-Instruct
+Levels : ['fp16', '4bit', '8bit']
+Tokens : 5 (probe run)
+============================================================
+
+--- Level: fp16 (compression=None) ---
+>>>> bitsandbytes installed
+>>>> cache_utils installed
+using hf_token
+found index file...
+found_layers:{'model.embed_tokens.': True, 'model.layers.0.': True, 'model.layers.1.': True, 'model.layers.2.': True, 'model.layers.3.': True, 'model.layers.4.': True, 'model.layers.5.': True, 'model.layers.6.': True, 'model.layers.7.': True, 'model.layers.8.': True, 'model.layers.9.': True, 'model.layers.10.': True, 'model.layers.11.': True, 'model.layers.12.': True, 'model.layers.13.': True, 'model.layers.14.': True, 'model.layers.15.': True, 'model.layers.16.': True, 'model.layers.17.': True, 'model.layers.18.': True, 'model.layers.19.': True, 'model.layers.20.': True, 'model.layers.21.': True, 'model.layers.22.': True, 'model.layers.23.': True, 'model.layers.24.': True, 'model.layers.25.': True, 'model.layers.26.': True, 'model.layers.27.': True, 'model.layers.28.': True, 'model.layers.29.': True, 'model.layers.30.': True, 'model.layers.31.': True, 'model.norm.': True, 'lm_head.': True}
+saved layers already found in model_shards\splitted_model
+The class `optimum.bettertransformers.transformation.BetterTransformer` is deprecated and will be removed in a future release.
+new version of transfomer, no need to use BetterTransformer, try setting attn impl to sdpa...
+attn imp: <class 'transformers.models.llama.modeling_llama.LlamaSdpaAttention'>
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+The class `optimum.bettertransformers.transformation.BetterTransformer` is deprecated and will be removed in a future release.
+new version of transfomer, no need to use BetterTransformer, try setting attn impl to sdpa...
+attn imp: <class 'transformers.models.llama.modeling_llama.LlamaSdpaAttention'>
+Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   0%|          | 0/35 [00:00<?, ?it/s]running layers(cpu):   3%|2         | 1/35 [00:00<00:16,  2.01it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+Prefetching is enabled, but no pin_memory operation is needed for CPU.
+The attention layers in this model are transitioning from computing the RoPE embeddings internally through `position_ids` (2D tensor with the indexes of the tokens), to using externally computed `position_embeddings` (Tuple of tensors, containing cos and sin). In v4.46 `position_ids` will be removed and `position_embeddings` will be mandatory.
+running layers(cpu):   6%|5         | 2/35 [00:00<00:15,  2.20it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   9%|8         | 3/35 [00:01<00:14,  2.26it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  11%|#1        | 4/35 [00:01<00:13,  2.37it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  14%|#4        | 5/35 [00:02<00:12,  2.34it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  17%|#7        | 6/35 [00:02<00:12,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  20%|##        | 7/35 [00:02<00:11,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  23%|##2       | 8/35 [00:03<00:11,  2.36it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  26%|##5       | 9/35 [00:03<00:11,  2.36it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  29%|##8       | 10/35 [00:04<00:10,  2.30it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  31%|###1      | 11/35 [00:04<00:10,  2.37it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  34%|###4      | 12/35 [00:05<00:09,  2.36it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  37%|###7      | 13/35 [00:05<00:09,  2.33it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  40%|####      | 14/35 [00:05<00:08,  2.36it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  43%|####2     | 15/35 [00:06<00:08,  2.37it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  46%|####5     | 16/35 [00:06<00:07,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  49%|####8     | 17/35 [00:07<00:07,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  51%|#####1    | 18/35 [00:07<00:06,  2.44it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  54%|#####4    | 19/35 [00:08<00:06,  2.48it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  57%|#####7    | 20/35 [00:08<00:06,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  60%|######    | 21/35 [00:08<00:05,  2.44it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  63%|######2   | 22/35 [00:09<00:05,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  66%|######5   | 23/35 [00:09<00:04,  2.48it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  69%|######8   | 24/35 [00:10<00:04,  2.47it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  71%|#######1  | 25/35 [00:10<00:04,  2.48it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  74%|#######4  | 26/35 [00:10<00:03,  2.52it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  77%|#######7  | 27/35 [00:11<00:03,  2.49it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  80%|########  | 28/35 [00:11<00:02,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  83%|########2 | 29/35 [00:12<00:02,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  86%|########5 | 30/35 [00:12<00:02,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  89%|########8 | 31/35 [00:12<00:01,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  91%|#########1| 32/35 [00:13<00:01,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  94%|#########4| 33/35 [00:13<00:00,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  97%|#########7| 34/35 [00:13<00:00,  2.96it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.40it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.41it/s]
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+The class `optimum.bettertransformers.transformation.BetterTransformer` is deprecated and will be removed in a future release.
+new version of transfomer, no need to use BetterTransformer, try setting attn impl to sdpa...
+attn imp: <class 'transformers.models.llama.modeling_llama.LlamaSdpaAttention'>
+running layers(cpu):   0%|          | 0/35 [00:00<?, ?it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   3%|2         | 1/35 [00:00<00:16,  2.09it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   6%|5         | 2/35 [00:00<00:15,  2.18it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   9%|8         | 3/35 [00:01<00:14,  2.21it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  11%|#1        | 4/35 [00:01<00:13,  2.30it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  14%|#4        | 5/35 [00:02<00:13,  2.29it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  17%|#7        | 6/35 [00:02<00:12,  2.35it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  20%|##        | 7/35 [00:03<00:11,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  23%|##2       | 8/35 [00:03<00:11,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  26%|##5       | 9/35 [00:03<00:10,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  29%|##8       | 10/35 [00:04<00:10,  2.35it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  31%|###1      | 11/35 [00:04<00:09,  2.46it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  34%|###4      | 12/35 [00:05<00:09,  2.48it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  37%|###7      | 13/35 [00:05<00:08,  2.48it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  40%|####      | 14/35 [00:05<00:08,  2.57it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  43%|####2     | 15/35 [00:06<00:08,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  46%|####5     | 16/35 [00:06<00:07,  2.44it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  49%|####8     | 17/35 [00:07<00:07,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  51%|#####1    | 18/35 [00:07<00:06,  2.44it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  54%|#####4    | 19/35 [00:07<00:06,  2.45it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  57%|#####7    | 20/35 [00:08<00:06,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  60%|######    | 21/35 [00:08<00:05,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  63%|######2   | 22/35 [00:09<00:05,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  66%|######5   | 23/35 [00:09<00:04,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  69%|######8   | 24/35 [00:09<00:04,  2.45it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  71%|#######1  | 25/35 [00:10<00:04,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  74%|#######4  | 26/35 [00:10<00:03,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  77%|#######7  | 27/35 [00:11<00:03,  2.44it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  80%|########  | 28/35 [00:11<00:02,  2.49it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  83%|########2 | 29/35 [00:11<00:02,  2.54it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  86%|########5 | 30/35 [00:12<00:01,  2.53it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  89%|########8 | 31/35 [00:12<00:01,  2.56it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  91%|#########1| 32/35 [00:13<00:01,  2.53it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  94%|#########4| 33/35 [00:13<00:00,  2.51it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  97%|#########7| 34/35 [00:13<00:00,  3.14it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.39it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.44it/s]
+The class `optimum.bettertransformers.transformation.BetterTransformer` is deprecated and will be removed in a future release.
+new version of transfomer, no need to use BetterTransformer, try setting attn impl to sdpa...
+attn imp: <class 'transformers.models.llama.modeling_llama.LlamaSdpaAttention'>
+running layers(cpu):   0%|          | 0/35 [00:00<?, ?it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   3%|2         | 1/35 [00:00<00:16,  2.03it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   6%|5         | 2/35 [00:00<00:15,  2.17it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   9%|8         | 3/35 [00:01<00:13,  2.33it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  11%|#1        | 4/35 [00:01<00:13,  2.36it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  14%|#4        | 5/35 [00:02<00:12,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  17%|#7        | 6/35 [00:02<00:11,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  20%|##        | 7/35 [00:02<00:11,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  23%|##2       | 8/35 [00:03<00:11,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  26%|##5       | 9/35 [00:03<00:10,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  29%|##8       | 10/35 [00:04<00:10,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  31%|###1      | 11/35 [00:04<00:10,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  34%|###4      | 12/35 [00:05<00:09,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  37%|###7      | 13/35 [00:05<00:09,  2.35it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  40%|####      | 14/35 [00:05<00:08,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  43%|####2     | 15/35 [00:06<00:08,  2.47it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  46%|####5     | 16/35 [00:06<00:07,  2.46it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  49%|####8     | 17/35 [00:07<00:07,  2.49it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  51%|#####1    | 18/35 [00:07<00:07,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  54%|#####4    | 19/35 [00:07<00:06,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  57%|#####7    | 20/35 [00:08<00:06,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  60%|######    | 21/35 [00:08<00:05,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  63%|######2   | 22/35 [00:09<00:05,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  66%|######5   | 23/35 [00:09<00:04,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  69%|######8   | 24/35 [00:10<00:04,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  71%|#######1  | 25/35 [00:10<00:04,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  74%|#######4  | 26/35 [00:10<00:03,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  77%|#######7  | 27/35 [00:11<00:03,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  80%|########  | 28/35 [00:11<00:02,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  83%|########2 | 29/35 [00:12<00:02,  2.36it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  86%|########5 | 30/35 [00:12<00:02,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  89%|########8 | 31/35 [00:12<00:01,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  91%|#########1| 32/35 [00:13<00:01,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  94%|#########4| 33/35 [00:13<00:00,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  97%|#########7| 34/35 [00:13<00:00,  3.01it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.28it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.40it/s]
+The class `optimum.bettertransformers.transformation.BetterTransformer` is deprecated and will be removed in a future release.
+new version of transfomer, no need to use BetterTransformer, try setting attn impl to sdpa...
+attn imp: <class 'transformers.models.llama.modeling_llama.LlamaSdpaAttention'>
+running layers(cpu):   0%|          | 0/35 [00:00<?, ?it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   3%|2         | 1/35 [00:00<00:16,  2.07it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   6%|5         | 2/35 [00:00<00:14,  2.22it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   9%|8         | 3/35 [00:01<00:13,  2.36it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  11%|#1        | 4/35 [00:01<00:13,  2.31it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  14%|#4        | 5/35 [00:02<00:12,  2.35it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  17%|#7        | 6/35 [00:02<00:12,  2.25it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  20%|##        | 7/35 [00:03<00:12,  2.30it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  23%|##2       | 8/35 [00:03<00:11,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  26%|##5       | 9/35 [00:03<00:11,  2.30it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  29%|##8       | 10/35 [00:04<00:10,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  31%|###1      | 11/35 [00:04<00:10,  2.34it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  34%|###4      | 12/35 [00:05<00:09,  2.34it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  37%|###7      | 13/35 [00:05<00:09,  2.35it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  40%|####      | 14/35 [00:06<00:08,  2.35it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  43%|####2     | 15/35 [00:06<00:08,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  46%|####5     | 16/35 [00:06<00:07,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  49%|####8     | 17/35 [00:07<00:07,  2.48it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  51%|#####1    | 18/35 [00:07<00:06,  2.46it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  54%|#####4    | 19/35 [00:08<00:06,  2.44it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  57%|#####7    | 20/35 [00:08<00:05,  2.50it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  60%|######    | 21/35 [00:08<00:05,  2.44it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  63%|######2   | 22/35 [00:09<00:05,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  66%|######5   | 23/35 [00:09<00:04,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  69%|######8   | 24/35 [00:10<00:04,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  71%|#######1  | 25/35 [00:10<00:04,  2.45it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  74%|#######4  | 26/35 [00:10<00:03,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  77%|#######7  | 27/35 [00:11<00:03,  2.45it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  80%|########  | 28/35 [00:11<00:02,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  83%|########2 | 29/35 [00:12<00:02,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  86%|########5 | 30/35 [00:12<00:02,  2.37it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  89%|########8 | 31/35 [00:13<00:01,  2.44it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  91%|#########1| 32/35 [00:13<00:01,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  94%|#########4| 33/35 [00:13<00:00,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  97%|#########7| 34/35 [00:13<00:00,  3.05it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.32it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.39it/s]
+The class `optimum.bettertransformers.transformation.BetterTransformer` is deprecated and will be removed in a future release.
+new version of transfomer, no need to use BetterTransformer, try setting attn impl to sdpa...
+attn imp: <class 'transformers.models.llama.modeling_llama.LlamaSdpaAttention'>
+running layers(cpu):   0%|          | 0/35 [00:00<?, ?it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   3%|2         | 1/35 [00:00<00:16,  2.03it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   6%|5         | 2/35 [00:00<00:15,  2.09it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   9%|8         | 3/35 [00:01<00:14,  2.22it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  11%|#1        | 4/35 [00:01<00:13,  2.31it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  14%|#4        | 5/35 [00:02<00:12,  2.31it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  17%|#7        | 6/35 [00:02<00:12,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  20%|##        | 7/35 [00:03<00:12,  2.30it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  23%|##2       | 8/35 [00:03<00:11,  2.31it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  26%|##5       | 9/35 [00:03<00:11,  2.29it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  29%|##8       | 10/35 [00:04<00:11,  2.26it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  31%|###1      | 11/35 [00:04<00:10,  2.27it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  34%|###4      | 12/35 [00:05<00:10,  2.30it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  37%|###7      | 13/35 [00:05<00:09,  2.33it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  40%|####      | 14/35 [00:06<00:08,  2.36it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  43%|####2     | 15/35 [00:06<00:08,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  46%|####5     | 16/35 [00:06<00:07,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  49%|####8     | 17/35 [00:07<00:07,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  51%|#####1    | 18/35 [00:07<00:07,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  54%|#####4    | 19/35 [00:08<00:06,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  57%|#####7    | 20/35 [00:08<00:06,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  60%|######    | 21/35 [00:09<00:06,  2.33it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  63%|######2   | 22/35 [00:09<00:05,  2.26it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  66%|######5   | 23/35 [00:09<00:05,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  69%|######8   | 24/35 [00:10<00:04,  2.37it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  71%|#######1  | 25/35 [00:10<00:04,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  74%|#######4  | 26/35 [00:11<00:03,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  77%|#######7  | 27/35 [00:11<00:03,  2.33it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  80%|########  | 28/35 [00:12<00:03,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  83%|########2 | 29/35 [00:12<00:02,  2.31it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  86%|########5 | 30/35 [00:12<00:02,  2.34it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  89%|########8 | 31/35 [00:13<00:01,  2.38it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  91%|#########1| 32/35 [00:13<00:01,  2.34it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  94%|#########4| 33/35 [00:14<00:00,  2.42it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  97%|#########7| 34/35 [00:14<00:00,  3.01it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.35it/s]running layers(cpu): 100%|##########| 35/35 [00:14<00:00,  2.35it/s]
+The class `optimum.bettertransformers.transformation.BetterTransformer` is deprecated and will be removed in a future release.
+new version of transfomer, no need to use BetterTransformer, try setting attn impl to sdpa...
+attn imp: <class 'transformers.models.llama.modeling_llama.LlamaSdpaAttention'>
+running layers(cpu):   0%|          | 0/35 [00:00<?, ?it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   3%|2         | 1/35 [00:00<00:16,  2.12it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   6%|5         | 2/35 [00:00<00:14,  2.21it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):   9%|8         | 3/35 [00:01<00:14,  2.22it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  11%|#1        | 4/35 [00:01<00:14,  2.20it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  14%|#4        | 5/35 [00:02<00:13,  2.17it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  17%|#7        | 6/35 [00:02<00:12,  2.24it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  20%|##        | 7/35 [00:03<00:12,  2.23it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  23%|##2       | 8/35 [00:03<00:12,  2.24it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  26%|##5       | 9/35 [00:04<00:11,  2.26it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  29%|##8       | 10/35 [00:04<00:11,  2.26it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  31%|###1      | 11/35 [00:04<00:10,  2.25it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  34%|###4      | 12/35 [00:05<00:10,  2.29it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  37%|###7      | 13/35 [00:05<00:09,  2.31it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  40%|####      | 14/35 [00:06<00:09,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  43%|####2     | 15/35 [00:06<00:08,  2.34it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  46%|####5     | 16/35 [00:06<00:07,  2.43it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  49%|####8     | 17/35 [00:07<00:07,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  51%|#####1    | 18/35 [00:07<00:06,  2.46it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  54%|#####4    | 19/35 [00:08<00:06,  2.41it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  57%|#####7    | 20/35 [00:08<00:06,  2.37it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  60%|######    | 21/35 [00:09<00:05,  2.34it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  63%|######2   | 22/35 [00:09<00:05,  2.31it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  66%|######5   | 23/35 [00:09<00:05,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  69%|######8   | 24/35 [00:10<00:04,  2.33it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  71%|#######1  | 25/35 [00:10<00:04,  2.31it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  74%|#######4  | 26/35 [00:11<00:03,  2.28it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  77%|#######7  | 27/35 [00:11<00:03,  2.33it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  80%|########  | 28/35 [00:12<00:02,  2.39it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  83%|########2 | 29/35 [00:12<00:02,  2.45it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  86%|########5 | 30/35 [00:12<00:02,  2.45it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  89%|########8 | 31/35 [00:13<00:01,  2.40it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  91%|#########1| 32/35 [00:13<00:01,  2.32it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  94%|#########4| 33/35 [00:14<00:00,  2.22it/s]Prefetching is enabled, but no pin_memory operation is needed for CPU.
+running layers(cpu):  97%|#########7| 34/35 [00:14<00:00,  2.81it/s]running layers(cpu): 100%|##########| 35/35 [00:15<00:00,  2.28it/s]running layers(cpu): 100%|##########| 35/35 [00:15<00:00,  2.32it/s]
+  TTFT        : 14.96 s
+  TPOT        : 15.091 s/token
+  Throughput  : 0.0553 tok/s
+  Peak RAM    : 2.54 GB
+  Power (est) : 1.6325 Wh
+  Tokens gen  : 5
+  Error       : None
+  Output      : Explain the difference between supervised and unsupervised learning in three paragraphs. 
+Supervised learning is
+  Saved to    : c:\Users\itaym\Documents\hw5-orchestration-airllm\Project-5\results\airllm_fp16_20260624_175218.json
+
+--- Level: 4bit (compression='4bit') ---
+using hf_token
+found index file...
+found_layers:{'model.embed_tokens.': False, 'model.layers.0.': False, 'model.layers.1.': False, 'model.layers.2.': False, 'model.layers.3.': False, 'model.layers.4.': False, 'model.layers.5.': False, 'model.layers.6.': False, 'model.layers.7.': False, 'model.layers.8.': False, 'model.layers.9.': False, 'model.layers.10.': False, 'model.layers.11.': False, 'model.layers.12.': False, 'model.layers.13.': False, 'model.layers.14.': False, 'model.layers.15.': False, 'model.layers.16.': False, 'model.layers.17.': False, 'model.layers.18.': False, 'model.layers.19.': False, 'model.layers.20.': False, 'model.layers.21.': False, 'model.layers.22.': False, 'model.layers.23.': False, 'model.layers.24.': False, 'model.layers.25.': False, 'model.layers.26.': False, 'model.layers.27.': False, 'model.layers.28.': False, 'model.layers.29.': False, 'model.layers.30.': False, 'model.layers.31.': False, 'model.norm.': False, 'lm_head.': False}
+some layer splits found, some are not, re-save all layers in case there's some corruptions.
+  0%|          | 0/35 [00:00<?, ?it/s]Loading shard 1/4
+  0%|          | 0/35 [00:00<?, ?it/s]
+  TTFT        : 0.00 s
+  TPOT        : 0.000 s/token
+  Throughput  : 0.0000 tok/s
+  Peak RAM    : 0.00 GB
+  Power (est) : 0.0000 Wh
+  Tokens gen  : 0
+  Error       : AssertionError: Torch not compiled with CUDA enabled
+  Output      : (none)
+  Saved to    : c:\Users\itaym\Documents\hw5-orchestration-airllm\Project-5\results\airllm_4bit_20260624_175218.json
+
+--- Level: 8bit (compression='8bit') ---
+using hf_token
+found index file...
+  0%|          | 0/35 [00:00<?, ?it/s]Loading shard 1/4
+  0%|          | 0/35 [00:00<?, ?it/s]
+  TTFT        : 0.00 s
+  TPOT        : 0.000 s/token
+  Throughput  : 0.0000 tok/s
+  Peak RAM    : 0.00 GB
+  Power (est) : 0.0000 Wh
+  Tokens gen  : 0
+  Error       : AssertionError: Torch not compiled with CUDA enabled
+  Output      : (none)
+  Saved to    : c:\Users\itaym\Documents\hw5-orchestration-airllm\Project-5\results\airllm_8bit_20260624_175218.json
