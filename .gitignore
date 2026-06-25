@@ -20,4 +20,3 @@ __pycache__/
 dist/
 build/
 .venv/
-logs/airllm_run_20260623_213449.log
