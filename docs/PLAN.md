@@ -1,10 +1,19 @@
 # PLAN — EX05: Architecture & Technical Design
 
-**Version:** 1.00  
-**Status:** Awaiting Approval  
-**Author:** Diana Koroblov  
-**Date:** 2026-06-23  
-**Reference:** PRD v1.00
+**Version:** 1.01  
+**Status:** Approved  
+**Authors:** Itay Malich & Diana Koroblov  
+**Date:** 2026-06-23 (v1.00) | 2026-06-25 (v1.01 — updated to reflect completed three-stage implementation)  
+**Reference:** PRD v1.01
+
+---
+
+## Changelog
+
+| Version | Date | Change |
+|---|---|---|
+| 1.00 | 2026-06-23 | Initial architecture design |
+| 1.01 | 2026-06-25 | Added Stage 3 (Ollama/GGUF); updated repo structure to match actual implementation; updated config, testing strategy, and architectural decisions |
 
 ---
 
@@ -12,54 +21,87 @@
 
 This document describes the technical architecture, environment design, experiment pipeline, and measurement strategy for EX05. It translates the requirements in `PRD.md` into a concrete, implementable design.
 
+The experiment runs in three stages:
+
+1. **Stage 1 — Baseline:** Direct FP16 loading via Hugging Face Transformers. Documents near-OOM conditions.
+2. **Stage 2 — AirLLM:** Layer-by-layer NVMe streaming. Reduces peak RAM 6.7×; CUDA-only quantization paths are blocked on this AMD box.
+3. **Stage 3 — Ollama/GGUF:** CPU-native quantization via llama.cpp. Delivers the real quantization gradient (FP16→Q8→Q4→Q2) that Stage 2 cannot.
+
 ---
 
 ## 2. Repository Structure
 
 ```
-ex05-airllm/
-├── README.md                   # Technical report (the final deliverable)
-├── pyproject.toml              # Single source of truth for deps + uv config
-├── uv.lock                     # Locked dependency graph
-├── .env-example                # Placeholder for secrets (HF_TOKEN, etc.)
+Project-5/
+├── README.md                       # Technical report (the final deliverable)
+├── LICENSE                         # MIT © 2026 Itay Malich & Diana Koroblov
+├── pyproject.toml                  # Single source of truth for deps + uv config
+├── uv.lock                         # Locked dependency graph
+├── .env-example                    # Placeholder for secrets (HF_TOKEN)
 ├── .gitignore
 │
 ├── docs/
-│   ├── PRD.md
-│   ├── PLAN.md
-│   └── TODO.md
+│   ├── PRD.md                      # This project's PRD
+│   ├── PLAN.md                     # This file
+│   ├── TODO.md                     # Task tracking
+│   ├── PROMPT_LOG.md               # AI-assisted development prompt log
+│   ├── PRD_airllm.md               # Per-mechanism PRD: AirLLM runner
+│   ├── PRD_ollama.md               # Per-mechanism PRD: Ollama/GGUF runner
+│   └── PRD_economics.md            # Per-mechanism PRD: economics model
 │
 ├── src/
 │   └── ex05/
-│       ├── __init__.py
-│       ├── config.py           # Load config + .env; expose typed settings
-│       ├── metrics.py          # TTFT, TPOT, throughput, RAM measurement
-│       ├── baseline.py         # Baseline (direct HF) inference runner
-│       ├── airllm_runner.py    # AirLLM inference runner
-│       └── economics.py        # Break-even cost calculation logic
+│       ├── __init__.py             # Package version
+│       ├── config.py               # Typed config dataclasses; .env loading
+│       ├── metrics.py              # TTFT, TPOT, throughput, RAM measurement
+│       ├── baseline.py             # Baseline (direct HF) inference runner
+│       ├── airllm_runner.py        # AirLLM layer-streaming inference runner
+│       ├── ollama_runner.py        # Ollama CPU-quantization runner (GGUF)
+│       └── economics.py            # Break-even cost calculation logic
 │
 ├── experiments/
-│   ├── run_baseline.py         # Entry point: baseline experiment
-│   ├── run_airllm.py           # Entry point: AirLLM + quantization sweep
-│   └── run_economics.py        # Entry point: economic analysis + graph
+│   ├── run_baseline.py             # Entry point: Stage 1 baseline
+│   ├── run_airllm.py               # Entry point: Stage 2 AirLLM sweep
+│   ├── run_ollama.py               # Entry point: Stage 3 Ollama sweep
+│   ├── run_economics.py            # Entry point: economic analysis + graph
+│   ├── generate_graphs.py          # KPI comparison charts (Stages 1+2)
+│   ├── generate_ollama_graphs.py   # Quantization gradient chart (Stage 3)
+│   └── generate_roofline.py        # Roofline Model plot (extension)
 │
-├── results/
-│   └── .gitkeep               # Raw JSON/CSV output lands here
+├── results/                        # Raw JSON output (committed — required deliverable)
+│   ├── baseline_*.json
+│   ├── airllm_*.json
+│   ├── ollama_*.json
+│   └── economics_*.json
 │
-├── figures/
-│   └── .gitkeep               # Generated graphs (PNG) land here
+├── figures/                        # Generated graphs (PNG, committed)
+│   ├── baseline_failure.png
+│   ├── ram_comparison.png
+│   ├── ttft_comparison.png
+│   ├── throughput_comparison.png
+│   ├── ollama_quant_comparison.png
+│   ├── break_even.png
+│   └── roofline.png
+│
+├── notebooks/
+│   └── results_analysis.ipynb      # Central research artifact
 │
 ├── tests/
-│   ├── conftest.py
+│   ├── conftest.py                 # Shared fixtures
+│   ├── test_config.py
 │   ├── test_metrics.py
-│   └── test_economics.py
+│   ├── test_economics.py
+│   └── test_ollama_runner.py
 │
-└── config/
-    ├── experiment_config.json  # Prompt, max_tokens, quantization levels
-    └── economics_config.json   # Prices, hardware cost, electricity rate
+├── config/
+│   ├── experiment_config.json      # Prompt, tokens, quant levels, Ollama config
+│   └── economics_config.json       # Hardware costs, electricity, API pricing
+│
+├── logs/                           # Run logs (committed; referenced in README)
+└── model_shards/                   # AirLLM layer shards (gitignored; large binary)
 ```
 
-All source files are capped at 150 lines per the software guidelines.
+All source files are capped at 150 non-blank, non-comment lines per the software guidelines.
 
 ---
 
@@ -67,42 +109,27 @@ All source files are capped at 150 lines per the software guidelines.
 
 ### 3.1 Rationale for uv
 
-`uv` is the mandatory package manager per the software guidelines. It provides deterministic installs via `uv.lock`, fast resolution, and a clean `pyproject.toml`-based workflow. No `pip`, `venv`, or `virtualenv` calls are permitted anywhere in the project.
+`uv` is the mandatory package manager per the software guidelines. It provides deterministic installs via `uv.lock`, fast resolution, and a clean `pyproject.toml`-based workflow. No `pip`, `venv`, or `virtualenv` calls appear anywhere in the project.
 
 ### 3.2 Python Version
 
-**Python 3.11** — The highest version confirmed compatible with `airllm`, `bitsandbytes`, and `transformers` as of 2025. Python 3.12+ introduces breaking changes in some dependencies.
+**Python 3.11** — the highest version confirmed compatible with `airllm`, `bitsandbytes`, and `transformers` as of 2025. Python 3.12+ introduces breaking changes in some dependencies.
 
 ### 3.3 Setup Commands
 
 ```bash
-# Install uv (one-time)
-pip install uv
-
-# Create isolated environment and install all dependencies
-uv sync
-
-# Add a package (example)
-uv add airllm
-
-# Run any script
-uv run python experiments/run_baseline.py
-
-# Run tests
-uv run pytest tests/
-
-# Lint
-uv run ruff check .
+uv sync                                          # install all dependencies
+uv run python experiments/run_baseline.py        # Stage 1
+uv run python experiments/run_airllm.py          # Stage 2
+uv run python experiments/run_ollama.py          # Stage 3 (requires: ollama serve)
+uv run python experiments/run_economics.py       # economics
+uv run pytest tests/                             # run tests
+uv run ruff check .                              # lint
 ```
 
 ### 3.4 Secrets Management
 
-The Hugging Face token is loaded exclusively from `.env` via `python-dotenv`. The `.env` file is listed in `.gitignore`. An `.env-example` file with a dummy placeholder is committed.
-
-```
-# .env-example
-HF_TOKEN=hf_YOUR_TOKEN_HERE
-```
+The Hugging Face token is loaded exclusively from `.env` via `python-dotenv`. The `.env` file is in `.gitignore`. An `.env-example` with a dummy placeholder is committed.
 
 ---
 
@@ -116,10 +143,24 @@ All runtime-tunable values live in `config/`. No magic numbers appear in source 
   "version": "1.00",
   "model_id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "prompt": "Explain the difference between supervised and unsupervised learning in three paragraphs.",
-  "max_new_tokens": 200,
-  "quantization_levels": ["4bit", "8bit"],
+  "max_new_tokens": 10,
+  "max_new_tokens_experiment": 200,
+  "quantization_levels": ["fp16", "4bit", "8bit"],
   "layer_shards_path": "./model_shards",
-  "seed": 42
+  "seed": 42,
+  "cpu_tdp_watts": 65,
+  "ollama": {
+    "host": "http://localhost:11434",
+    "num_predict": 200,
+    "temperature": 0,
+    "force_cpu": true,
+    "quant_levels": {
+      "fp16": "llama3.1:8b-instruct-fp16",
+      "q8":   "llama3.1:8b-instruct-q8_0",
+      "q4":   "llama3.1:8b-instruct-q4_K_M",
+      "q2":   "llama3.1:8b-instruct-q2_K"
+    }
+  }
 }
 ```
 
@@ -127,16 +168,18 @@ All runtime-tunable values live in `config/`. No magic numbers appear in source 
 ```json
 {
   "version": "1.00",
-  "hardware_cost_ils": 6000,
+  "hardware_cost_ils": 7000,
   "amortization_years": 3,
   "electricity_kwh_ils": 0.60,
-  "avg_power_watts": 45,
-  "api_provider": "openai_gpt4o_mini",
+  "avg_power_watts": 65,
+  "maintenance_cost_annual_ils": 300,
   "api_input_cost_per_1m_tokens": 0.15,
   "api_output_cost_per_1m_tokens": 0.60,
   "avg_input_tokens_per_request": 50,
   "avg_output_tokens_per_request": 200,
-  "monthly_request_range": [1, 100000]
+  "cache_discount_factor": 0.1,
+  "cloud_gpu_hourly_usd": 0.50,
+  "usd_to_ils_rate": 3.7
 }
 ```
 
@@ -146,104 +189,98 @@ All runtime-tunable values live in `config/`. No magic numbers appear in source 
 
 ### 5.1 Standardized Prompt
 
-A single fixed prompt is used across all scenarios to ensure fair comparison:
+A single fixed prompt is used across all three stages for fair comparison:
 
 > *"Explain the difference between supervised and unsupervised learning in three paragraphs."*
 
-This prompt is short enough (≈12 tokens) to keep Prefill fast, while requesting 200 output tokens to stress the Decode phase.
+Short enough (≈12 tokens) to keep Prefill fast; requests 200 output tokens to stress Decode.
 
-### 5.2 Experiment A — Baseline (Direct HF Execution)
+### 5.2 Stage 1 — Baseline (Direct HF Execution)
 
-**Goal:** Demonstrate that loading Meta-Llama-3.1-8B-Instruct in FP16 directly into RAM fails or hangs.
+**Goal:** Demonstrate that loading Meta-Llama-3.1-8B-Instruct in FP16 saturates available RAM.
 
-**Design:**
-1. Load `AutoTokenizer` and `AutoModelForCausalLM` from Hugging Face in FP16 (`torch_dtype=torch.float16`).
+1. Load `AutoTokenizer` and `AutoModelForCausalLM` in FP16.
 2. Start RAM monitoring (background thread via `psutil`).
-3. Attempt `model.generate()` with the standardized prompt.
-4. Capture one of:
-   - `torch.cuda.OutOfMemoryError` / OS kill signal
-   - RAM exceeding 14 GB + system becoming unresponsive
-   - Time-to-first-token exceeding a 10-minute timeout
-5. Log the failure mode, peak RAM, and elapsed time to `results/baseline.json`.
+3. Call `model.generate()` with `max_new_tokens=10`.
+4. Log peak RAM, TTFT, runtime, and error state to `results/baseline_*.json`.
 
-**Expected outcome:** OOM error or unresponsive system within 2–5 minutes of loading.
+**Outcome:** 17.01 GB peak RSS — 94% of available RAM. System unresponsive during inference. Documents the near-failure condition.
 
-**Safety measures:** Set `max_new_tokens=10` to limit runaway generation; wrap the entire call in a try/except with a timeout guard.
+### 5.3 Stage 2 — AirLLM + Quantization Sweep
 
-### 5.3 Experiment B — AirLLM + Quantization Sweep
+**Goal:** Demonstrate layer-streaming RAM reduction and document the CUDA quantization constraint.
 
-**Goal:** Run the same prompt with AirLLM at multiple quantization levels and record all KPIs.
+For each level in `["fp16", "4bit", "8bit", "2bit"]`:
 
-**Design:**
+1. Instantiate `airllm.AutoModel` with the configured `layer_shards_saving_path` and `compression`.
+2. Run generation; record TTFT, per-token timestamps (→ TPOT), peak RAM, and output.
+3. Persist `MetricsResult` to `results/airllm_<level>_*.json`.
 
-For each quantization level in `["4bit", "8bit"]` (and FP16 as a reference if memory allows):
+**Outcomes:**
+- FP16: ran; 6.7× RAM reduction (17.01 → 2.54 GB); 15 s/token decode (NVMe bound).
+- Q4/Q8: `AssertionError: Torch not compiled with CUDA enabled` — bitsandbytes CUDA dependency (RISK-05).
+- Q2: ran but silently fell back to FP16 shards (byte-identical on disk); not genuine 2-bit.
 
-1. Instantiate `AirLLMLlama` (or `AutoModel` for the Qwen fallback) with the configured `layer_shards_saving_path` and `compression` level.
-2. Start background RAM monitor thread.
-3. Record `t_start` (wall clock).
-4. Call `model.generate()` with a callback hook that records the timestamp of the **first token** (→ TTFT).
-5. Record timestamps for each subsequent token (→ TPOT per token).
-6. After generation completes, record `t_end` and final peak RAM.
-7. Compute and persist: TTFT, mean TPOT, throughput (tokens/s), peak RAM, total elapsed, output text.
-8. Conduct qualitative assessment of output at each level (1–5 coherence score).
+### 5.4 Stage 3 — Ollama CPU Quantization Sweep
 
-**AirLLM mechanics (per lecture):** AirLLM streams one transformer layer at a time from disk using `mmap`, computes the forward pass, retains only the hidden state tensor in RAM, then evicts the layer weights. This mirrors the OS virtual memory / paging mechanism — each layer is a "page" fetched on demand.
+**Goal:** Deliver the real quantization gradient that Stage 2 cannot, using GGUF/llama.cpp.
 
-**Layer shards path:** Explicitly set to `./model_shards` (or a fast external drive if available) to avoid writing tens of gigabytes to the OS partition.
+For each level in `["fp16", "q8", "q4", "q2"]`:
+
+1. Send streaming HTTP request to `http://localhost:11434/api/generate` with `num_gpu=0`.
+2. Collect `(perf_counter, chunk)` events; derive TTFT, TPOT, throughput, token count.
+3. Query `/api/ps` for peak RAM (`size − size_vram`).
+4. Persist `MetricsResult` to `results/ollama_<level>_*.json`.
+
+**Peak RAM is read from `/api/ps`, not process RSS.** GGUF files are mmap'd by the Ollama server process; the RSS is misleadingly low. `/api/ps` reports the actual model footprint in memory.
+
+**Outcomes:** Monotonic gradient — RAM ↓4.4× (FP16→Q2), throughput ↑4.5×; quality loss only at Q2 (score 4/5 vs 5/5 for FP16–Q4).
 
 ---
 
 ## 6. Metrics Architecture
 
-### 6.1 `src/ex05/metrics.py`
+### `src/ex05/metrics.py`
 
-This module exposes:
+- `RamMonitor` — `threading.Thread` that samples `psutil.Process().memory_info().rss` every 500 ms; records peak.
+- `record_token(ts)` — appends a `perf_counter()` timestamp to a list for per-token latency.
+- `MetricsResult` — frozen `dataclass` holding all KPIs, with `.to_dict()` for JSON serialization; computed via `compute_metrics()`.
 
-- `RamMonitor` — a `threading.Thread` subclass that samples `psutil.Process().memory_info().rss` every 500 ms and records the peak.
-- `InferenceTimer` — a context manager that wraps the generation call, captures `t_start`, intercepts the first-token callback to record TTFT, then records `t_end` and computes TPOT and throughput from the token timestamps list.
-- `MetricsResult` — a `dataclass` holding all measured values, with a `.to_dict()` method for JSON serialization.
+### `src/ex05/ollama_runner.py`
 
-### 6.2 Token Callback Strategy
+- `_stream_generate()` — `urllib` streaming over the Ollama HTTP API; yields `(perf_counter, parsed_json)` events.
+- `_model_ram_gb()` — queries `/api/ps`; returns `(size − size_vram) / 1024**3`.
+- `_assemble()` — pure function; builds `MetricsResult` from streamed event list.
+- CPU forcing: `options.num_gpu=0`; determinism: `temperature=0`.
 
-AirLLM (like the underlying `transformers` library) supports a `StreamingStdOutCallbackHandler` or a custom `StoppingCriteria` / `LogitsProcessor`. We will implement a lightweight `TokenTimestampLogger` that appends `time.perf_counter()` on each token generation step, enabling precise per-token latency.
+### Results Persistence
 
-### 6.3 Results Persistence
-
-Every experiment run serializes its `MetricsResult` to `results/<scenario>_<timestamp>.json`. The analysis notebook and graph scripts read from these files, not from in-memory state, ensuring reproducibility.
+Every experiment run serializes its `MetricsResult` to `results/<scenario>_<timestamp>.json`. The analysis notebook and graph scripts read from these files, ensuring reproducibility on a fresh clone.
 
 ---
 
 ## 7. Economic Analysis Architecture
 
-### 7.1 `src/ex05/economics.py`
-
-Computes:
+### `src/ex05/economics.py`
 
 **API cost per request:**
 ```
-cost_api = (input_tokens × price_input + output_tokens × price_output) / 1_000_000
+cost_api = (input_tokens × price_input + output_tokens × price_output) / 1_000_000 × USD→ILS
+```
+With `cache_discount_factor` applied to cached input tokens.
+
+**On-Prem monthly fixed cost:**
+```
+fixed = hardware_cost / (amort_years × 12)          # CAPEX
+      + (avg_power_W / 1000) × 720h × elec_rate     # OPEX electricity
+      + maintenance_annual / 12                      # OPEX maintenance
 ```
 
-**On-Prem cost per request (as a function of monthly volume N):**
-```
-capex_monthly   = hardware_cost / (amortization_years × 12)
-opex_monthly    = (avg_power_W / 1000) × avg_hours_per_month × electricity_rate
-fixed_monthly   = capex_monthly + opex_monthly
-cost_onprem(N)  = fixed_monthly / N   (per request, decreasing with N)
-```
+**Break-even (closed form):** `N* = fixed_monthly / cost_api`
 
-**Break-even point:** Solve `cost_api = cost_onprem(N)` → `N* = fixed_monthly / cost_api`.
+**Cloud GPU cost per request:** `(runtime_min / 60) × hourly_rate × USD→ILS`
 
-**Prompt caching note:** For API providers with context caching (OpenAI, Claude), repeated requests sharing a fixed system prompt pay a reduced rate on cached input tokens (~10% of normal input price). The economics module accepts a `cache_discount_factor` parameter to model this effect.
-
-### 7.2 Break-Even Graph
-
-`experiments/run_economics.py` generates a Matplotlib figure showing:
-- X-axis: monthly request volume (log scale)
-- Y-axis: cumulative cost (ILS or USD)
-- Two lines: API cost (linear) vs On-Prem cost (fixed monthly amortized to per-request)
-- Vertical dashed line at N* (break-even)
-- Saved to `figures/break_even.png`
+`experiments/run_economics.py` generates `figures/break_even.png` with three curves (API, On-Prem, Cloud GPU) and a vertical dashed line at N*.
 
 ---
 
@@ -251,26 +288,33 @@ cost_onprem(N)  = fixed_monthly / N   (per request, decreasing with N)
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Model format | SafeTensors (HF) | Required by AirLLM's mmap-based layer loading; also safer than pickle-based `.bin` |
-| Quantization backend | `bitsandbytes` via AirLLM | Native integration; supports 4-bit and 8-bit on CPU |
-| RAM monitor granularity | 500 ms polling | Fine enough to catch peak without significant overhead |
-| Token timing mechanism | `perf_counter()` callback | Sub-millisecond precision; avoids CUDA event overhead (no GPU) |
-| Configuration format | JSON (not YAML) | No extra dependency; human-readable; strict schema |
-| Experiment entry points | Separate scripts per experiment | Allows running phases independently; avoids reloading model between experiments |
-| Layer shards location | Configurable path | Prevents OS-drive flooding; allows redirection to fast NVMe partition |
+| Model format | SafeTensors (HF) + GGUF (Ollama) | SafeTensors required by AirLLM mmap; GGUF required for CPU-native quantization |
+| Stage 2 quantization backend | `bitsandbytes` via AirLLM | Native integration; documented as CUDA-only (negative result) |
+| Stage 3 quantization backend | Ollama/llama.cpp GGUF | CPU-native; no CUDA required; one-command model management |
+| Ollama HTTP transport | Raw `urllib` (no `ollama` Python package) | No extra dependency; full control over streaming timestamps for accurate TTFT |
+| Peak RAM measurement (Ollama) | `/api/ps` `size` field | GGUF is mmap'd — RSS is misleadingly low, notably on Windows |
+| CPU forcing (Ollama) | `options.num_gpu=0` | Verified by `size_vram=0` in `/api/ps` response |
+| RAM monitor granularity | 500 ms polling | Fine enough to catch peaks; negligible overhead |
+| Token timing | `perf_counter()` callback | Sub-millisecond precision; no CUDA event dependency |
+| Configuration format | JSON | No extra dependency; human-readable; strict schema |
+| Experiment entry points | Separate script per stage | Allows running phases independently; avoids reloading model between experiments |
 
 ---
 
 ## 9. Testing Strategy
 
-Tests are scoped to non-experiment utility modules (metrics computation logic, economics calculation), as the model inference itself cannot be unit-tested without the model present.
+Tests are scoped to pure-logic modules. Live model inference (baseline, AirLLM) cannot be unit-tested without the 16 GB model present; the Ollama live path is covered by the experiment scripts.
 
-| Test File | What it Tests |
+| Test File | Coverage |
 |---|---|
-| `tests/test_metrics.py` | `MetricsResult` construction, TTFT/TPOT computation from mock timestamp lists, RAM monitor logic with mocked `psutil` |
-| `tests/test_economics.py` | Break-even calculation correctness, edge cases (N=0, very high N), cache discount factor application |
+| `tests/test_config.py` | `config.py` — dataclass construction, JSON loading, OllamaConfig, `get_hf_token()` |
+| `tests/test_metrics.py` | `metrics.py` — `MetricsResult` construction, TTFT/TPOT derivation, RamMonitor with mocked psutil |
+| `tests/test_economics.py` | `economics.py` — break-even correctness, edge cases (N=0, high N), cache discount, algebraic consistency |
+| `tests/test_ollama_runner.py` | `ollama_runner.py` — `_build_payload`, `_model_ram_gb` (mocked HTTP), `_assemble` from synthetic events |
 
-Coverage target: ≥ 85% on `src/ex05/metrics.py` and `src/ex05/economics.py`.
+`baseline.py` and `airllm_runner.py` are excluded from coverage measurement (they require the live 16 GB model and CUDA hardware; documented in `pyproject.toml` `[tool.coverage.run] omit`).
+
+**Coverage target:** ≥ 85% global (`--cov-fail-under=85`). Actual: 92%.
 
 ---
 
@@ -278,17 +322,25 @@ Coverage target: ≥ 85% on `src/ex05/metrics.py` and `src/ex05/economics.py`.
 
 | Experiment Finding | Lecture Concept |
 |---|---|
-| Baseline OOM on FP16 load | VRAM / RAM exhaustion; model size vs available memory |
-| AirLLM layer-by-layer execution | Virtual memory paging; mmap; OS page fault mechanism |
-| High TPOT in AirLLM | Memory-bound Decode phase; SSD I/O as the new bottleneck replacing VRAM bandwidth |
-| TTFT vs TPOT separation | Prefill (compute-bound) vs Decode (memory-bound) |
-| Q4 lower RAM, lower quality | Quantization trade-off; NF4 (QLoRA paper) |
-| Break-even analysis | On-Prem CAPEX+OPEX vs API per-token pricing |
+| Baseline saturates RAM at 17.01 GB | RAM exhaustion; model size vs available memory |
+| AirLLM: peak RSS drops to 2.54 GB | Virtual memory paging; mmap; OS page-fault mechanism applied to transformer layers |
+| AirLLM TPOT = 15 s/token | Memory-bound Decode; NVMe I/O as bottleneck replacing DDR5 bandwidth |
+| TTFT vs TPOT separation | Prefill (compute-bound GEMM) vs Decode (memory-bound GEMV) |
+| Ollama Q4: 3× less RAM, 3.5× faster | Quantization arithmetic: fewer bits/weight → fewer bytes/token → faster memory-bound decode |
+| Roofline: decode at I=1 FLOP/byte | Ridge point theory; both DDR5 and NVMe roofs confirm memory-bound classification |
+| Break-even N* ≈ 525k req/mo | On-Prem CAPEX+OPEX vs API per-token pricing; prompt caching shifts the curve |
 
 ---
 
-## 11. Extension (Original Initiative)
+## 11. Extension — Roofline Model
 
-**Proposed extension:** Generate a **Roofline Model** plot for our hardware, overlaying the measured FLOP/byte ratios of the Prefill and Decode phases against the system's theoretical memory bandwidth and compute ceiling. This directly addresses the assignment's "advanced aspiration" and provides a rigorous, visual proof of which resource is the binding constraint at each phase.
+**Implemented in:** `experiments/generate_roofline.py` → `figures/roofline.png`
 
-If time permits: compare Llama-3.1-8B against `Qwen2.5-7B-Instruct` at Q4 to observe whether architecture differences (GQA vs MHA) affect TPOT under AirLLM.
+The Roofline Model plots attainable GFLOP/s against arithmetic intensity (FLOP/byte) on log-log axes:
+
+- **Compute roof:** 2560 GFLOP/s (8 cores × 5 GHz × 64 FLOP/cycle, AVX-512)
+- **DDR5 memory roof:** 50 GB/s → ridge point at 51 FLOP/byte
+- **NVMe memory roof:** 7 GB/s → ridge point at 366 FLOP/byte
+- **Decode operating point:** I = 1 FLOP/byte (2 FLOP per 2-byte weight, GEMV)
+
+Both ridge points are far to the right of I=1, confirming decode is **memory-bound on every roof**. The Baseline (DDR5) and AirLLM (NVMe) points both sit on their respective memory-bandwidth roofs. This is the rigorous, visual proof of the bottleneck claim made throughout the report.
