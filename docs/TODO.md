@@ -186,11 +186,31 @@ backend quantizes natively on CPU.
 - [x] R5-08 [Done] [Developer] [Priority: High] - Run final test pass with coverage enforcement | DoD: `uv run pytest tests/ --cov=src/ex05 --cov-fail-under=85` passes with all tests green
   - [x] Validation: `uv run pytest tests/ --cov=src/ex05 --cov-fail-under=85` → **35 passed, 100% coverage**, gate satisfied (baseline.py/airllm_runner.py omitted with documented rationale; see EC4-02).
 - [x] R5-09 [Done] [Developer] [Priority: High] - Review `README.md` as an external reader | DoD: No unexplained acronyms; all graphs have captions; all assumptions stated; execution instructions are self-contained
-  - [x] Result: Reader pass done — filled header (Author: Itay Malich; Course: L08), updated Table of Contents (§8 renamed, §9 added), removed all placeholders (`grep` for PLACEHOLDER/TBD/[Your Name] → none). All 6 figures embedded with captions; acronyms (TTFT/TPOT/GEMV/GEMM/AI) defined on first use. ⚠️ **Verify author/partner attribution before submitting** (assumed solo "Itay Malich").
+  - [x] Result: Reader pass done — filled header (**Authors: Itay Malich & Diana Koroblov**; Course: L08), updated Table of Contents (§8 renamed, §9 added, §10 added), removed all placeholders (`grep` for PLACEHOLDER/TBD/[Your Name] → none). All figures embedded with captions; acronyms (TTFT/TPOT/GEMV/GEMM/AI) defined on first use.
 - [ ] R5-10 [Pending] [User] [Priority: High] - Create the GitHub repository and push all committed files | DoD: Remote repo is public; `README.md` renders correctly on GitHub with all images visible
   - [ ] ⏳ WAITING FOR USER — The report is complete. Please create a new GitHub repository, add the remote, and push. Reply with the repository URL when it is live so I can verify the README renders correctly.
 - [ ] R5-11 [Pending] [User] [Priority: High] - Perform the final submission check against the assignment rubric and submit | DoD: All deliverable items from the assignment §7 are checked off; submission is made
   - [ ] ⏳ WAITING FOR USER — This is the final step. Please verify the repository against the assignment rubric (§7 Deliverables) and make your submission. Reply when done — we're finished!
+
+---
+
+## Phase 6 — Submission-Guideline Gap-Fills (software_submission_guidelines.md)
+
+Closing professional-standards gaps identified by reviewing the assignment +
+guidelines against the repo.
+
+- [x] G6-01 [Done] [Developer] - VRAM metric (§5.4 requires "RAM **and** VRAM") | DoD: explicitly answered, not omitted.
+  - [x] Result: Added **Peak VRAM** row to §1 Measurement Tools (0 GB, all CPU-only; Ollama `size_vram=0`, CPU-only torch), a §5 note explaining the all-zero column is intentional, and a §8 Q1 clause (binding resource = system RAM, never VRAM).
+- [x] G6-02 [Done] [Developer] - License + credits + contributing | DoD: `LICENSE` file + README has License/credits/contributing.
+  - [x] Result: MIT `LICENSE` (© 2026 Itay Malich & Diana Koroblov); README §10 with author table, third-party credits table (AirLLM/Ollama/transformers/torch/Llama license + "Built with Llama" note), and contributing/repro steps. Header updated to both authors; TOC + §10 added.
+- [x] G6-03 [Done] [Developer] - Prompt Engineering Log (required for AI-built projects) | DoD: `docs/PROMPT_LOG.md` with prompts, intent, outcomes, lessons.
+  - [x] Result: 6-phase log (planning → Ollama) with intent/outcome/lesson tables + cross-cutting lessons.
+- [x] G6-04 [Done] [Developer] - Per-mechanism PRDs (guidelines require dedicated PRDs for major mechanisms) | DoD: one per major component.
+  - [x] Result: `docs/PRD_airllm.md`, `docs/PRD_ollama.md`, `docs/PRD_economics.md` — each with description, theory, I/O/constraints, perf vs measured, alternatives, success criteria + test scenarios.
+- [x] G6-05 [Done] [Developer] - Results analysis notebook ("central research artifact") | DoD: loads `results/*.json`, reproduces tables/figures, equations + references.
+  - [x] Result: `notebooks/results_analysis.ipynb` (14 cells) — master KPI table, AirLLM trade-off, Ollama gradient (+plot), roofline derivation (LaTeX), economics, conclusions + references. All cells verified runnable; ruff-clean; offline.
+- [x] G6-06 [Done] [Developer] - Discoverability + final gate | DoD: docs linked from README; ruff + coverage green.
+  - [x] Result: README "Supporting documents" pointer block links all PRDs/notebook/prompt-log. Final: `ruff check .` clean (incl. notebook), `pytest --cov-fail-under=85` → 47 passed, 92%.
 
 ---
 

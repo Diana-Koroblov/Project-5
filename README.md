@@ -18,6 +18,15 @@
 9. [Extension / Original Initiative — Roofline Model](#9-extension--original-initiative--roofline-model)
 10. [License, Credits & Contributing](#10-license-credits--contributing)
 
+### Supporting documents
+
+This README is the technical report. Deeper design and analysis docs:
+
+- **Requirements & planning:** [`docs/PRD.md`](docs/PRD.md), [`docs/PLAN.md`](docs/PLAN.md), [`docs/TODO.md`](docs/TODO.md)
+- **Per-mechanism PRDs:** [`docs/PRD_airllm.md`](docs/PRD_airllm.md), [`docs/PRD_ollama.md`](docs/PRD_ollama.md), [`docs/PRD_economics.md`](docs/PRD_economics.md)
+- **Results analysis notebook:** [`notebooks/results_analysis.ipynb`](notebooks/results_analysis.ipynb) — reproduces every table/figure from `results/*.json`
+- **Prompt engineering log:** [`docs/PROMPT_LOG.md`](docs/PROMPT_LOG.md)
+
 ---
 
 ## 1. Experiment Description
