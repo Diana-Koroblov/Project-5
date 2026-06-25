@@ -1,0 +1,13 @@
+{
+  "scenario": "ollama_q4",
+  "prompt_tokens": 25,
+  "generated_tokens": 200,
+  "ttft_seconds": 3.2662142000044696,
+  "tpot_seconds": 0.08639923216080078,
+  "throughput_tokens_per_sec": 9.761458458721268,
+  "peak_ram_gb": 5.193164060823619,
+  "total_runtime_seconds": 20.488741600012872,
+  "estimated_power_wh": 0.36993561222245464,
+  "output_text": "Here are three paragraphs explaining the difference between supervised and unsupervised learning:\n\n**Supervised Learning**: In supervised learning, the algorithm is trained on a labeled dataset, where each example or instance has a corresponding target output or label. The goal of the algorithm is to learn a mapping from input data to the correct output labels, so that it can make predictions on new, unseen data. Supervised learning algorithms are typically used for tasks such as image classification, speech recognition, and sentiment analysis, where the desired outcome is well-defined and can be labeled by humans.\n\n**Unsupervised Learning**: In contrast, unsupervised learning involves training an algorithm on a dataset without any pre-existing labels or target outputs. The goal of the algorithm is to identify patterns, relationships, or structure in the data that may not have been explicitly defined. Unsupervised learning algorithms are often used for tasks such as clustering, dimensionality reduction, and anomaly detection, where the underlying data distribution is unknown or complex.\n\n**Key",
+  "error": null
+}

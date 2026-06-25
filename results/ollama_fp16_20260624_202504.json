@@ -1,0 +1,13 @@
+{
+  "scenario": "ollama_fp16",
+  "prompt_tokens": 25,
+  "generated_tokens": 200,
+  "ttft_seconds": 17.16307889999007,
+  "tpot_seconds": 0.27101150402011254,
+  "throughput_tokens_per_sec": 2.8119936161900565,
+  "peak_ram_gb": 15.57570312358439,
+  "total_runtime_seconds": 71.12391679998836,
+  "estimated_power_wh": 1.284181831110901,
+  "output_text": "Here are three paragraphs explaining the difference between supervised and unsupervised learning:\n\n**Supervised Learning**: In supervised learning, the algorithm is trained on a labeled dataset, where each example is associated with a target output or response variable. The goal of the algorithm is to learn a mapping from input data to the corresponding output labels, so that it can make accurate predictions on new, unseen data. Think of it like teaching a child to recognize different types of animals: you show them pictures of cats and dogs, and tell them which one is which, until they can do it on their own.\n\n**Unsupervised Learning**: In contrast, unsupervised learning involves training an algorithm on unlabeled data, where the goal is to discover patterns or relationships within the data. The algorithm doesn't have a specific target output in mind; instead, it tries to identify clusters, groups, or structures that exist naturally in the data. For example, imagine you're trying to group customers into segments based on their buying",
+  "error": null
+}

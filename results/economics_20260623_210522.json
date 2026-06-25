@@ -1,0 +1,14 @@
+{
+  "api_cost_per_request_ils": 0.00047175000000000006,
+  "api_cost_per_request_cached_ils": 0.000446775,
+  "cloud_gpu_cost_per_request_ils": 0.015416666666666667,
+  "breakeven_requests_no_cache": 524694,
+  "breakeven_requests_cached": 554024,
+  "config": {
+    "hardware_cost_ils": 7000,
+    "amortization_years": 3,
+    "maintenance_cost_annual_ils": 300,
+    "electricity_kwh_ils": 0.6,
+    "avg_power_watts": 65
+  }
+}

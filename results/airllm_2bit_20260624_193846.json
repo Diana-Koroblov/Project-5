@@ -1,0 +1,13 @@
+{
+  "scenario": "airllm_2bit",
+  "prompt_tokens": 11,
+  "generated_tokens": 5,
+  "ttft_seconds": 19.03500879998319,
+  "tpot_seconds": 18.14496564000001,
+  "throughput_tokens_per_sec": 0.04555400413296859,
+  "peak_ram_gb": 2.5564918518066406,
+  "total_runtime_seconds": 109.75983549997909,
+  "estimated_power_wh": 1.9817748076385113,
+  "output_text": "Explain the difference between supervised and unsupervised learning in three paragraphs.\u00a0\nSupervised learning is",
+  "error": null
+}

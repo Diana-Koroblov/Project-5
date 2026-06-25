@@ -1,0 +1,13 @@
+{
+  "scenario": "ollama_q2",
+  "prompt_tokens": 25,
+  "generated_tokens": 200,
+  "ttft_seconds": 4.585128500009887,
+  "tpot_seconds": 0.05579761457284351,
+  "throughput_tokens_per_sec": 12.746945215295376,
+  "peak_ram_gb": 3.5711718732491136,
+  "total_runtime_seconds": 15.690033699997002,
+  "estimated_power_wh": 0.28329227513883476,
+  "output_text": "Here are three paragraphs explaining the difference between supervised and unsupervised learning:\n\nSupervised learning is a type of machine learning where the algorithm is trained on labeled data, meaning that each example in the dataset has a corresponding label or target output. The goal of supervised learning is to learn a mapping from input data to output labels, so that the algorithm can make predictions on new, unseen data. In other words, the algorithm learns to predict the desired outcome based on the training data it was given. This type of learning is useful for applications such as image classification, natural language processing, and predictive modeling.\n\nIn contrast, unsupervised learning is a type of machine learning where the algorithm is trained on unlabeled data. The goal of unsupervised learning is to identify patterns or structure in the data that are not explicitly labeled by humans. This type of learning is useful for applications such as clustering, dimensionality reduction, and anomaly detection. Since there are no labels provided with the data, the algorithm must",
+  "error": null
+}

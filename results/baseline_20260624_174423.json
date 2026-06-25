@@ -1,0 +1,13 @@
+{
+  "scenario": "baseline_fp16",
+  "prompt_tokens": 11,
+  "generated_tokens": 1,
+  "ttft_seconds": 6.244100600015372,
+  "tpot_seconds": 0.0,
+  "throughput_tokens_per_sec": 0.1601510647334962,
+  "peak_ram_gb": 17.006473541259766,
+  "total_runtime_seconds": 6.244104600016726,
+  "estimated_power_wh": 0.11274077750030201,
+  "output_text": "Explain the difference between supervised and unsupervised learning in three paragraphs. \n\nSupervised learning is a type of machine learning",
+  "error": null
+}

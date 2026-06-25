@@ -4,8 +4,8 @@
 # Model weights and shards (large binary files)
 model_shards/
 
-# Experiment outputs (generated at runtime)
-results/
+# NOTE: results/ is intentionally NOT ignored — the raw experiment JSONs are a
+# required deliverable and the data source for notebooks/results_analysis.ipynb.
 
 # Python cache
 __pycache__/
@@ -13,6 +13,7 @@ __pycache__/
 *.pyo
 .pytest_cache/
 .ruff_cache/
+.coverage
 
 # Build artifacts
 *.egg-info/
