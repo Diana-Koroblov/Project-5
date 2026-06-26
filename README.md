@@ -429,7 +429,23 @@ Q2, Q4, Q8). Three outcomes emerged: **FP16 ran**, **Q2 ran but did not actually
 compress**, and **Q4/Q8 were blocked** by a hard hardware constraint (RISK-05).
 
 **Run:** `experiments/run_airllm.py` (+ `airllm_q2_*` probe for Q2)
-**Logs:** `logs/airllm_sweep_20260624_175040.log`, `logs/airllm_q2_20260624_193846.log`
+**Logs:** `logs/airllm_sweep_20260624_175040.log`, `logs/airllm_q2_20260624_193846.log`, `logs/airllm_run_20260623_213449.log`
+
+**We genuinely ran AirLLM end-to-end — it works, but is unbearably slow.** The
+clearest single piece of evidence is
+[`logs/airllm_run_20260623_213449.log`](logs/airllm_run_20260623_213449.log): a
+**9,981-line** capture of one sweep in which AirLLM streams **all 35 transformer
+layers from the NVMe SSD for every single generated token** — one
+`running layers(cpu): …/35` progress cycle per token, repeated endlessly. That
+repetition *is* the finding: thousands of identical layer-load bars filling ten
+thousand lines of log. At ≈15 s/token the model does produce coherent text, but
+a full 200-token answer takes roughly **50 minutes**, which is why the sweep had
+to be capped to stay tractable. This is not a crash and not a misconfiguration —
+it is the expected, measured price of trading scarce RAM capacity for abundant-
+but-slow NVMe bandwidth (quantified in the Roofline analysis, §9). We commit the
+full, unabridged log on purpose, so the slowness is *visible* rather than merely
+asserted: AirLLM made the otherwise un-loadable model loadable, at a latency that
+is simply impractical for interactive use on this hardware.
 
 | Scenario | TTFT (s) | TPOT (s/tok) | Throughput (tok/s) | Peak RAM (GB) | Power (Wh) | Quality (1–5) | Status |
 |---|---|---|---|---|---|---|---|
