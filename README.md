@@ -845,8 +845,8 @@ Released under the **MIT License** — see [LICENSE](LICENSE).
 
 | Author | Role |
 |---|---|
-| **Itay Malich** | Experiment design, implementation, analysis |
-| **Diana Koroblov** | PRD / requirements, hardware, review |
+| **Itay Malich** | Experiment design, implementation, hardware |
+| **Diana Koroblov** | PRD / TODO / requirements, review, analysis |
 
 ### Credits & Third-Party Components
 
