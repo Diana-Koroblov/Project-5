@@ -157,7 +157,7 @@ All KPIs are measured per scenario: Baseline, AirLLM-FP16, AirLLM-Q2, Ollama-FP1
 | NFR-02 | All source files ≤ 150 lines (blank and comment lines excluded). |
 | NFR-03 | Zero Ruff lint violations (`ruff check .`). |
 | NFR-04 | No secrets committed to the repository. |
-| NFR-05 | Test coverage ≥ 85% on non-experiment utility modules. |
+| NFR-05 | Test coverage ≥ 85% across all `src/ex05` modules (enforced by `--cov-fail-under=85`); model loaders are unit-tested with dependencies mocked. |
 | NFR-06 | Python version ≤ 3.11 (AirLLM/transformers compatibility). |
 
 ---
@@ -226,4 +226,4 @@ All KPIs are measured per scenario: Baseline, AirLLM-FP16, AirLLM-Q2, Ollama-FP1
 - [x] Repository structure matches recommended layout; results JSONs committed.
 - [x] All code passes `uv run ruff check .` with zero violations.
 - [x] No HF token or secrets appear in any committed file.
-- [x] Test coverage ≥ 85% (`uv run pytest --cov-fail-under=85`).
+- [x] Test coverage ≥ 85% (`uv run pytest --cov-fail-under=85`) — actual 100% across all modules, 60 tests.

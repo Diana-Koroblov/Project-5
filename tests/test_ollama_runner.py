@@ -12,7 +12,13 @@ import dataclasses
 import json
 from unittest.mock import MagicMock, patch
 
-from ex05.ollama_runner import _assemble, _build_payload, _model_ram_gb
+from ex05.ollama_runner import (
+    _assemble,
+    _build_payload,
+    _model_ram_gb,
+    _stream_generate,
+    run_ollama,
+)
 
 # ---------------------------------------------------------------------------
 # _build_payload
@@ -106,3 +112,56 @@ class TestAssemble:
         assert r.generated_tokens == 0
         assert r.ttft_seconds == 0.0
         assert r.error == "boom"
+
+
+# ---------------------------------------------------------------------------
+# _stream_generate
+# ---------------------------------------------------------------------------
+
+class TestStreamGenerate:
+    def _mock_response(self, lines):
+        resp = MagicMock()
+        resp.__iter__.return_value = iter(lines)
+        cm = MagicMock()
+        cm.__enter__.return_value = resp
+        cm.__exit__.return_value = False
+        return cm
+
+    def test_yields_parsed_json_and_skips_blank_lines(self, ollama_cfg):
+        lines = [b'{"response": "Hi"}\n', b'   \n', b'{"done": true}\n']
+        with patch("ex05.ollama_runner.urllib.request.urlopen",
+                   return_value=self._mock_response(lines)):
+            out = list(_stream_generate(ollama_cfg, "m"))
+        assert [chunk for _, chunk in out] == [{"response": "Hi"}, {"done": True}]
+        assert all(isinstance(ts, float) for ts, _ in out)
+
+
+# ---------------------------------------------------------------------------
+# run_ollama
+# ---------------------------------------------------------------------------
+
+class TestRunOllama:
+    def test_happy_path(self, ollama_cfg):
+        events = [
+            (1.0, {"response": "A"}),
+            (1.5, {"response": "B"}),
+            (2.0, {"done": True, "eval_count": 2, "prompt_eval_count": 5}),
+        ]
+        with (
+            patch("ex05.ollama_runner._stream_generate", return_value=iter(events)),
+            patch("ex05.ollama_runner._model_ram_gb", return_value=5.19),
+        ):
+            r = run_ollama(ollama_cfg, "q4", "m")
+        assert r.scenario == "ollama_q4"
+        assert r.output_text == "AB"
+        assert r.generated_tokens == 2
+        assert r.peak_ram_gb == 5.19
+        assert r.error is None
+
+    def test_stream_error_sets_error_and_zero_ram(self, ollama_cfg):
+        with patch("ex05.ollama_runner._stream_generate",
+                   side_effect=OSError("connection refused")):
+            r = run_ollama(ollama_cfg, "q4", "m")
+        assert r.error.startswith("OSError")
+        assert r.peak_ram_gb == 0.0
+        assert r.generated_tokens == 0

@@ -45,16 +45,7 @@ known-first-party = ["ex05"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "--cov=src/ex05 --cov-report=term-missing"
-
-[tool.coverage.run]
-# baseline.py and airllm_runner.py are integration wrappers that load the
-# live 16 GB Llama-3.1-8B model (and, for quantization, require a CUDA GPU).
-# They cannot run in the offline unit-test suite, so they are validated by
-# actually executing the experiments (see results/ and logs/) rather than by
-# pytest. They are excluded from the coverage denominator so the metric
-# reflects the testable utility/logic modules (config, economics, metrics).
-omit = [
-    "src/ex05/baseline.py",
-    "src/ex05/airllm_runner.py",
-]
+# --cov-fail-under enforces the guidelines' 85% floor automatically: the suite
+# fails if coverage regresses below threshold. Every src/ex05 module — including
+# the baseline and AirLLM runners (HF/AirLLM mocked) — is in the denominator.
+addopts = "--cov=src/ex05 --cov-report=term-missing --cov-fail-under=85"

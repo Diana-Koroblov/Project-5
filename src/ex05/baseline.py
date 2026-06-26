@@ -23,23 +23,21 @@ _TIMEOUT_SEC = 600  # 10 minutes
 
 def _arm_timeout() -> None:
     """Install a SIGALRM timeout on POSIX; silent no-op on Windows."""
-    if sys.platform == "win32":
-        return
-    import signal
+    if sys.platform != "win32":  # pragma: no cover - POSIX-only (no SIGALRM on win)
+        import signal
 
-    def _handler(signum, frame):  # noqa: ARG001
-        raise TimeoutError(f"Baseline exceeded {_TIMEOUT_SEC}s hard limit.")
+        def _handler(signum, frame):  # noqa: ARG001
+            raise TimeoutError(f"Baseline exceeded {_TIMEOUT_SEC}s hard limit.")
 
-    signal.signal(signal.SIGALRM, _handler)
-    signal.alarm(_TIMEOUT_SEC)
+        signal.signal(signal.SIGALRM, _handler)
+        signal.alarm(_TIMEOUT_SEC)
 
 
 def _disarm_timeout() -> None:
     """Cancel SIGALRM if on POSIX; silent no-op on Windows."""
-    if sys.platform == "win32":
-        return
-    import signal
-    signal.alarm(0)
+    if sys.platform != "win32":  # pragma: no cover - POSIX-only (no SIGALRM on win)
+        import signal
+        signal.alarm(0)
 
 
 def run_baseline(cfg: ExperimentConfig) -> MetricsResult:

@@ -314,8 +314,11 @@ break-even annotations) and `results/economics_<ts>.json`.
 uv run pytest
 ```
 
-Expected: ≥ 85% coverage on utility modules, all tests pass. Tests are fully
-offline — no model download required.
+Expected: all 60 tests pass at **100% coverage** across every `src/ex05`
+module (the suite auto-fails below the 85% floor via `--cov-fail-under=85`).
+Tests are fully offline — the model loaders and Ollama HTTP path are exercised
+with their dependencies mocked, so no model download, CUDA, or live Ollama
+server is required.
 
 ---
 

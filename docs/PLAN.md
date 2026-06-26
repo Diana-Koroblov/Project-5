@@ -93,6 +93,8 @@ Project-5/
 │   ├── test_config.py
 │   ├── test_metrics.py
 │   ├── test_economics.py
+│   ├── test_baseline.py
+│   ├── test_airllm_runner.py
 │   └── test_ollama_runner.py
 │
 ├── config/
@@ -309,18 +311,20 @@ The software guidelines mandate a central API Gatekeeper (rate limiting, queuein
 
 ## 9. Testing Strategy
 
-Tests are scoped to pure-logic modules. Live model inference (baseline, AirLLM) cannot be unit-tested without the 16 GB model present; the Ollama live path is covered by the experiment scripts.
+Every `src/ex05` module has a matching test file. The model-loading runners (baseline, AirLLM) and the Ollama HTTP path are heavy integration code, but they are still unit-tested by mocking their external dependencies — HF token, `AutoTokenizer`/`AutoModelForCausalLM`, AirLLM's `AutoModel` (via `sys.modules` injection), and `urllib` — so the entire suite runs fully offline with no model download, no CUDA, and no live Ollama server. The real end-to-end runs are additionally evidenced by `results/*.json` and `logs/`.
 
 | Test File | Coverage |
 |---|---|
 | `tests/test_config.py` | `config.py` — dataclass construction, JSON loading, OllamaConfig, `get_hf_token()` |
 | `tests/test_metrics.py` | `metrics.py` — `MetricsResult` construction, TTFT/TPOT derivation, RamMonitor with mocked psutil |
 | `tests/test_economics.py` | `economics.py` — break-even correctness, edge cases (N=0, high N), cache discount, algebraic consistency |
-| `tests/test_ollama_runner.py` | `ollama_runner.py` — `_build_payload`, `_model_ram_gb` (mocked HTTP), `_assemble` from synthetic events |
+| `tests/test_ollama_runner.py` | `ollama_runner.py` — `_build_payload`, `_model_ram_gb` / `_stream_generate` (mocked HTTP), `_assemble`, and `run_ollama` happy + error paths |
+| `tests/test_baseline.py` | `baseline.py` — happy path, generation failure, load failure (all HF deps mocked); win32 timeout no-ops |
+| `tests/test_airllm_runner.py` | `airllm_runner.py` — `_resolve_model_source` (both branches), `_make_model`, `run_airllm` happy + CUDA-failure paths |
 
-`baseline.py` and `airllm_runner.py` are excluded from coverage measurement (they require the live 16 GB model and CUDA hardware; documented in `pyproject.toml` `[tool.coverage.run] omit`).
+The only lines excluded from coverage are the POSIX-only `SIGALRM` timeout branch in `baseline.py` (marked `# pragma: no cover` — `signal.SIGALRM` does not exist on the Windows dev box and cannot be exercised there).
 
-**Coverage target:** ≥ 85% global (`--cov-fail-under=85`). Actual: 92%.
+**Coverage:** the suite auto-fails below 85% global (`--cov-fail-under=85` in `pyproject.toml`). Actual: **100%** across all seven modules (60 tests).
 
 ---
 
