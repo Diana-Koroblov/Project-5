@@ -23,6 +23,7 @@
 This README is the technical report. Deeper design and analysis docs:
 
 - **Requirements & planning:** [`docs/PRD.md`](docs/PRD.md), [`docs/PLAN.md`](docs/PLAN.md), [`docs/TODO.md`](docs/TODO.md)
+- **Architecture decisions:** [`docs/PLAN.md` §8](docs/PLAN.md) — trade-offs table, plus §8.1 on why a central **API Gatekeeper is N/A** for this offline/local-only experiment (no external billed or rate-limited API in the runtime path)
 - **Per-mechanism PRDs:** [`docs/PRD_airllm.md`](docs/PRD_airllm.md), [`docs/PRD_ollama.md`](docs/PRD_ollama.md), [`docs/PRD_economics.md`](docs/PRD_economics.md)
 - **Results analysis notebook:** [`notebooks/results_analysis.ipynb`](notebooks/results_analysis.ipynb) — reproduces every table/figure from `results/*.json`
 - **Prompt engineering log:** [`docs/PROMPT_LOG.md`](docs/PROMPT_LOG.md)

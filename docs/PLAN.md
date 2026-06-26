@@ -301,6 +301,10 @@ fixed = hardware_cost / (amort_years × 12)          # CAPEX
 | Configuration format | JSON | No extra dependency; human-readable; strict schema |
 | Experiment entry points | Separate script per stage | Allows running phases independently; avoids reloading model between experiments |
 
+### 8.1 API Gatekeeper — Not Applicable (deliberate)
+
+The software guidelines mandate a central API Gatekeeper (rate limiting, queueing, retries, monitoring) for **all external API calls**. This project has **no external, network-billed, rate-limited API in its runtime path**, so a gatekeeper would add infrastructure with nothing to govern: (1) the **economics analysis is fully offline** — OpenAI/Cloud-GPU pricing is *computed* from `config/economics_config.json`, never called, so there are no tokens to meter or rate-limit; (2) **Ollama inference targets `http://localhost:11434`** — a local server process the user runs, with no quota, no per-call billing, and no provider rate limit to respect (back-pressure against your own CPU is meaningless); and (3) the only genuinely remote calls are **Hugging Face model downloads**, which are one-time setup performed by `transformers`/`huggingface_hub`, not part of the measured experiment, and already retried internally by that library. The concerns a gatekeeper exists to solve — quota exhaustion, throttling, cost runaway, queue back-pressure — do not arise here. Were a paid remote inference API ever added (e.g. calling OpenAI for a real latency/cost comparison rather than computing it), the correct design would be a single `ex05` gatekeeper module wrapping that client, reading `requests_per_minute` / `max_retries` / `retry_delay` from a versioned `config/rate_limits.json`, with a FIFO queue and exponential-backoff retries — and **all** call sites routed through it. That extension point is intentionally left unbuilt because exercising it would require fabricating an API dependency the experiment does not need.
+
 ---
 
 ## 9. Testing Strategy
