@@ -64,6 +64,7 @@ Project-5/
 │   ├── run_airllm.py               # Entry point: Stage 2 AirLLM sweep
 │   ├── run_ollama.py               # Entry point: Stage 3 Ollama sweep
 │   ├── run_economics.py            # Entry point: economic analysis + graph
+│   ├── generate_break_even_cumulative.py  # Cumulative total-cost break-even
 │   ├── generate_graphs.py          # KPI comparison charts (Stages 1+2)
 │   ├── generate_ollama_graphs.py   # Quantization gradient chart (Stage 3)
 │   └── generate_roofline.py        # Roofline Model plot (extension)
@@ -81,6 +82,7 @@ Project-5/
 │   ├── throughput_comparison.png
 │   ├── ollama_quant_comparison.png
 │   ├── break_even.png
+│   ├── break_even_cumulative.png
 │   └── roofline.png
 │
 ├── notebooks/

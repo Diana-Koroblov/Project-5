@@ -299,10 +299,13 @@ Produces `figures/roofline.png` — the memory-bound analysis described in §9.
 
 ```bash
 uv run python experiments/run_economics.py
+uv run python experiments/generate_break_even_cumulative.py
 ```
 
-Produces `figures/break_even.png` (four cost curves + break-even annotations)
-and `results/economics_<ts>.json`.
+`run_economics.py` produces `figures/break_even.png` (per-request cost curves +
+break-even annotations) and `results/economics_<ts>.json`.
+`generate_break_even_cumulative.py` produces `figures/break_even_cumulative.png`
+(cumulative total-cost view with decision regions).
 
 ### Step 6 — Run tests
 
@@ -383,6 +386,23 @@ Runtime     : 6.2s
 Power (est) : 0.1127 Wh
 Error       : None (model ran)
 ```
+
+#### Live RAM evidence (Windows Task Manager)
+
+![Task Manager Processes tab — Python process holding ~15.2 GB](figures/ram_consumption_not_peak.png)
+
+*Processes tab during the run: the Python process occupies **15,196 MB (~15.2 GB)**
+of working set — the FP16 weight set resident in RAM.*
+
+![Task Manager Details tab — peak working set ~19.5 GB](figures/ram_consumption_peak.png)
+
+*Details tab, **Peak working set** column for the same `python.exe` (PID 10156):
+the high-water mark reached **19,490,740 K (~19.5 GB)** during checkpoint loading.
+Windows' continuous working-set counter catches transient allocator buffers from
+SafeTensors deserialization that the experiment's 0.5 s `psutil` sampler — which
+logged the **17.01 GB peak RSS** used in the tables — does not. Both confirm the
+same conclusion: the 8B FP16 model nearly saturates the ~18–19 GB of free RAM,
+i.e. the near-OOM condition the assignment calls for.*
 
 **Key observations:**
 
@@ -573,6 +593,24 @@ the API curve — below it the API is cheaper, above it On-Prem wins.
 *Figure: Cost per request (ILS, log-x) vs monthly request volume. The green
 On-Prem curve decreases with volume; the API (no-cache / cached) and Cloud GPU
 lines are flat. Vertical lines mark the break-even volumes N\*.*
+
+**Cumulative view (total monthly spend).** The chart above plots *cost per
+request*; the one below plots *cumulative cost* — total monthly spend vs volume
+— the classic break-even framing (a flat On-Prem cost crossed by rising API /
+Cloud lines). Both identify the same N\*, but the cumulative view makes two
+details explicit:
+
+![Cumulative Break-Even: total monthly cost vs volume](figures/break_even_cumulative.png)
+
+*Figure: **(A)** Linear cumulative cost — On-Prem (flat ₪247.52/mo) vs API.
+Below N\* ≈ 525k the API is cheaper (red zone); above N\* ≈ 554k self-hosting
+wins (green zone). The thin amber strip between them is **caching-dependent**:
+prompt caching shifts the break-even from 524,694 → 554,024 req/mo, so inside
+that ~30k window the cheaper option flips depending on cache-hit rate — the
+direct, visual version of the prompt-caching effect discussed below. **(B)**
+Log-log view across the full range including Cloud GPU, whose steep per-request
+cost crosses On-Prem far earlier (~16,055 req/mo); Cloud GPU is the most
+expensive option above that volume and never competitive with the API here.*
 
 ### Results
 
